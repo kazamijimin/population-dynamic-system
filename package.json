@@ -1,0 +1,15 @@
+{
+  "name": "population-dyanamic-system",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix population-frontend\" \"cd population-backend && venv\\\\Scripts\\\\python manage.py runserver\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
