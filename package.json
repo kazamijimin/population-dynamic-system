@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "concurrently \"npm run dev --prefix population-frontend\" \"cd population-backend && venv\\\\Scripts\\\\python manage.py runserver\""
+    "dev": "concurrently \"npm run dev --prefix population-frontend\" \"cd population-backend && venv\\\\Scripts\\\\python manage.py runserver\"",
+    "build": "npm run build --prefix population-frontend",
+    "deploy": "npm run build && npx wrangler deploy"
   },
   "keywords": [],
   "author": "",
