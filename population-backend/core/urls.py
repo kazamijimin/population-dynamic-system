@@ -5,4 +5,5 @@ from .views import health
 urlpatterns = [
     path('health/', health),
     path('auth/', include('core.users.urls')),
+    path('inventory/', include('core.inventory.urls')),
 ]

@@ -11,7 +11,7 @@ const Login = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { handleLogin } = useContext(AuthContext);
+  const { handleLogin, currentUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
@@ -30,7 +30,13 @@ const Login = () => {
     const result = await handleLogin(credentials.username, credentials.password);
     
     if (result.success) {
-      navigate('/admin/dashboard');
+      // Redirect based on user role
+      const user = result.user || currentUser;
+      if (user?.role === 'manager') {
+        navigate('/manager/dashboard');
+      } else {
+        navigate('/admin/dashboard');
+      }
     } else {
       setErrorMsg(result.message || 'Login failed');
     }

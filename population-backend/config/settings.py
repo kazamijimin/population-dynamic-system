@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'core',
     'core.users',
+    'core.inventory',
 ]
 
 

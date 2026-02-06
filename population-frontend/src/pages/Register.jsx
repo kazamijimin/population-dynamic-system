@@ -39,7 +39,12 @@ const Register = () => {
     const result = await handleRegister(formData);
     
     if (result.success) {
-      navigate('/admin/dashboard');
+      // Redirect based on selected role
+      if (formData.role === 'manager') {
+        navigate('/manager/dashboard');
+      } else {
+        navigate('/admin/dashboard');
+      }
     } else {
       setErrors(result.errors || {});
     }
