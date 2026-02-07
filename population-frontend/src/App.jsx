@@ -1,11 +1,14 @@
-import { Routes, Route } from "react-router-dom";
-import Dashboard from "./pages/Dashboard";
+import { BrowserRouter } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthProvider';
+import AppRoutes from './router/AppRoutes';
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Dashboard />} />
-    </Routes>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 
