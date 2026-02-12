@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'core',
     'core.users',
     'core.inventory',
+    'core.analytics',
 ]
 
 
