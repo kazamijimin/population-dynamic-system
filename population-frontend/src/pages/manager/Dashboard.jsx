@@ -13,6 +13,9 @@ export default function Dashboard() {
 
   return (
     <div >
+      <div>
+        PLACEHOLDER FOR SIDEBAR
+      </div>
       <div className="bg-red-100">
         test
       </div>
