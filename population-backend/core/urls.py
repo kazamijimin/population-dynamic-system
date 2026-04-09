@@ -5,5 +5,6 @@ urlpatterns = [
     path('health/', health),
     path('auth/', include('core.users.urls')),
     path('inventory/', include('core.inventory.urls')),
+    path('common/', include('core.common.urls')),
     path('', include('core.analytics.urls')),  # Add this line
 ]

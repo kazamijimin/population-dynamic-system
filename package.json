@@ -15,5 +15,8 @@
     "@tailwindcss/vite": "^4.1.18",
     "concurrently": "^9.2.1",
     "tailwindcss": "^4.1.18"
+  },
+  "dependencies": {
+    "@heroicons/react": "^2.2.0"
   }
 }

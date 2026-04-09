@@ -7,7 +7,8 @@ import Register from '../pages/Register';
 // Import pages
 import AdminDashboard from '../pages/admin/Dashboard';
 import AdminInventory from '../pages/admin/Inventory';
-import Reports from '../pages/admin/Reports';  // Add this import
+import Reports from '../pages/admin/Reports';
+import Population from '../pages/admin/Population';
 import ManagerDashboard from '../pages/manager/Dashboard';
 import ManagerInventory from '../pages/manager/Inventory';
 
@@ -31,7 +32,8 @@ const AppRoutes = () => {
       {/* Admin routes */}
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
       <Route path="/admin/inventory" element={<AdminInventory />} />
-      <Route path="/admin/reports" element={<Reports />} />  {/* Add this route */}
+      <Route path="/admin/reports" element={<Reports />} />
+      <Route path="/admin/population" element={<Population />} />
       
       {/* Manager routes */}
       <Route path="/manager/dashboard" element={<ManagerDashboard />} />

@@ -86,11 +86,11 @@ export default function Dashboard() {
         <h2 className="text-2xl font-bold text-gray-800 mb-8">Admin Panel</h2>
 
         <nav className="flex flex-col gap-4 text-gray-600">
-          <a className="hover:text-indigo-600 cursor-pointer">Dashboard</a>
-          <a className="hover:text-indigo-600 cursor-pointer">Simulations</a>
-          <a className="hover:text-indigo-600 cursor-pointer">Inventory</a>
-          <a className="hover:text-indigo-600 cursor-pointer">Reports</a>
-          <a className="hover:text-indigo-600 cursor-pointer">Users</a>
+          <a onClick={() => window.location.href='/admin/dashboard'} className="hover:text-indigo-600 cursor-pointer">Dashboard</a>
+          <a onClick={() => window.location.href='/admin/population'} className="hover:text-indigo-600 cursor-pointer">Population</a>
+          <a onClick={() => window.location.href='/admin/inventory'} className="hover:text-indigo-600 cursor-pointer">Inventory</a>
+          <a onClick={() => window.location.href='/admin/reports'} className="hover:text-indigo-600 cursor-pointer">Reports</a>
+          <a onClick={() => window.location.href='/admin/users'} className="hover:text-indigo-600 cursor-pointer">Users</a>
         </nav>
 
         <div className="mt-auto pt-6 border-t border-gray-200">

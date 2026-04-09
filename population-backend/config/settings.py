@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'core.users',
     'core.inventory',
     'core.analytics',
+    'core.common',
 ]
 
 
