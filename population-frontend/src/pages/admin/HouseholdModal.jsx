@@ -37,7 +37,7 @@ export default function HouseholdModal({ isOpen, onClose, household, zones, onSa
       onSave();
       onClose();
     } catch {
-      alert("Error saving household");
+      alert("Error saving area");
     }
   };
 
@@ -46,32 +46,32 @@ export default function HouseholdModal({ isOpen, onClose, household, zones, onSa
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
-        <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-800">{household ? "Edit Household" : "New Household"}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
+        <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/30">
+          <h2 className="text-2xl font-bold text-gray-800 tracking-tight">{household ? "Manage Dining Area" : "New Dining Area"}</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">✕</button>
         </div>
         
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">House Number</label>
-            <input required type="text" value={formData.house_number} onChange={e => setFormData({...formData, house_number: e.target.value})} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Table / Space Number</label>
+            <input required type="text" value={formData.house_number} onChange={e => setFormData({...formData, house_number: e.target.value})} className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all shadow-sm" placeholder="e.g. Table 01" />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Street / Landmark</label>
-            <input required type="text" value={formData.street} onChange={e => setFormData({...formData, street: e.target.value})} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Section / Floor</label>
+            <input required type="text" value={formData.street} onChange={e => setFormData({...formData, street: e.target.value})} className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all shadow-sm" placeholder="e.g. Mezzanine" />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Geographic Zone</label>
-            <select required value={formData.zone} onChange={e => setFormData({...formData, zone: e.target.value})} className="w-full px-4 py-2 border rounded-lg outline-none">
-              <option value="">Select Zone</option>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Shop Zone</label>
+            <select required value={formData.zone} onChange={e => setFormData({...formData, zone: e.target.value})} className="w-full px-4 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 transition-all shadow-sm">
+              <option value="">Select Cafe Zone</option>
               {zones.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
             </select>
           </div>
 
           <div className="flex justify-end gap-3 mt-8">
-            <button type="button" onClick={onClose} className="px-6 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition font-medium">Cancel</button>
-            <button type="submit" className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition shadow-md font-medium">
-              Save Household
+            <button type="button" onClick={onClose} className="px-6 py-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition font-bold text-sm uppercase">Cancel</button>
+            <button type="submit" className="px-8 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition shadow-lg shadow-emerald-100 font-bold text-sm uppercase">
+              {household ? "Update Area" : "Create Area"}
             </button>
           </div>
         </form>

@@ -1,18 +1,21 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
-from .models import Household, PopulationRecord, Zone, LifeEvent
-from .serializers import HouseholdSerializer, PopulationRecordSerializer, ZoneSerializer, LifeEventSerializer
+from .models import Household, PopulationRecord, Zone, ShopEvent, SimulationSettings
+from .serializers import (
+    HouseholdSerializer, PopulationRecordSerializer, 
+    ZoneSerializer, ShopEventSerializer, SimulationSettingsSerializer
+)
 
 class ZoneViewSet(viewsets.ModelViewSet):
-    """ViewSet for Geographic Zone CRUD operations"""
+    """ViewSet for Physical Shop Zones (Counter, Seating, etc.)"""
     queryset = Zone.objects.all()
     serializer_class = ZoneSerializer
     permission_classes = [IsAuthenticated]
 
-class LifeEventViewSet(viewsets.ModelViewSet):
-    """ViewSet for Life Events (Birth, Death, Migration)"""
-    queryset = LifeEvent.objects.all()
-    serializer_class = LifeEventSerializer
+class ShopEventViewSet(viewsets.ModelViewSet):
+    """ViewSet for Customer Flow Events (Arrival, Order, Departure)"""
+    queryset = ShopEvent.objects.all()
+    serializer_class = ShopEventSerializer
     permission_classes = [IsAuthenticated]
 
 class HouseholdViewSet(viewsets.ModelViewSet):
@@ -41,3 +44,8 @@ class PopulationRecordViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(status=status)
             
         return queryset
+class SimulationSettingsViewSet(viewsets.ModelViewSet):
+    """ViewSet for simulation configuration"""
+    queryset = SimulationSettings.objects.all()
+    serializer_class = SimulationSettingsSerializer
+    permission_classes = [IsAuthenticated]

@@ -14,6 +14,8 @@ class Ingredient(models.Model):
     ], default='pcs')
     min_stock_level = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     cost_per_unit = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    is_restock_suggestion_active = models.BooleanField(default=True)
+    restock_override_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -33,13 +35,16 @@ class Item(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     category = models.CharField(max_length=50, choices=[
-        ('beverage', 'Beverage'),
-        ('food', 'Food'),
-        ('dessert', 'Dessert'),
+        ('hot_drinks', 'Hot Drinks'),
+        ('cold_drinks', 'Cold Drinks'),
+        ('pastries', 'Pastries'),
+        ('desserts', 'Desserts'),
+        ('add_ons', 'Add-ons'),
         ('other', 'Other'),
-    ], default='beverage')
+    ], default='hot_drinks')
     price = models.DecimalField(max_digits=10, decimal_places=2)
     is_available = models.BooleanField(default=True)
+    is_archived = models.BooleanField(default=False)
     ingredients = models.ManyToManyField(Ingredient, through='ItemIngredient', related_name='items')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

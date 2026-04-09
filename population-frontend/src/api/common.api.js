@@ -20,8 +20,13 @@ export const commonApi = {
     getZones: () => api.get('/common/zones/'),
     createZone: (data) => api.post('/common/zones/', data),
 
-    // Life Events
-    recordEvent: (data) => api.post('/common/life-events/', data),
+    // Shop Flow Events
+    getShopEvents: (params) => api.get('/common/shop-events/', { params }),
+    recordShopEvent: (data) => api.post('/common/shop-events/', data),
+
+    // Simulation Settings
+    getSimulationSettings: () => api.get('/common/simulation-settings/'),
+    updateSimulationSetting: (id, data) => api.patch(`/common/simulation-settings/${id}/`, data),
 };
 
 export default commonApi;

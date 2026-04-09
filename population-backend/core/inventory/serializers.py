@@ -10,6 +10,7 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'description', 'quantity', 'unit',
             'min_stock_level', 'cost_per_unit', 'is_low_stock',
+            'is_restock_suggestion_active', 'restock_override_amount',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['created_at', 'updated_at']
@@ -31,7 +32,7 @@ class ItemSerializer(serializers.ModelSerializer):
         model = Item
         fields = [
             'id', 'name', 'description', 'category', 'price',
-            'is_available', 'item_ingredients', 'created_at', 'updated_at'
+            'is_available', 'is_archived', 'item_ingredients', 'created_at', 'updated_at'
         ]
         read_only_fields = ['created_at', 'updated_at']
 
@@ -48,7 +49,7 @@ class ItemCreateUpdateSerializer(serializers.ModelSerializer):
         model = Item
         fields = [
             'id', 'name', 'description', 'category', 'price',
-            'is_available', 'ingredients_data'
+            'is_available', 'is_archived', 'ingredients_data'
         ]
 
     def create(self, validated_data):

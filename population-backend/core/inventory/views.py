@@ -1,5 +1,5 @@
-from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework import status, permissions
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from .models import Item, Ingredient
 from .serializers import (
@@ -9,6 +9,7 @@ from .serializers import (
 )
 
 @api_view(['GET', 'POST'])
+@permission_classes([permissions.IsAuthenticated])
 def ingredient_list_create(request):
     """List all ingredients or create a new ingredient"""
     if request.method == 'GET':
@@ -25,6 +26,7 @@ def ingredient_list_create(request):
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([permissions.IsAuthenticated])
 def ingredient_detail(request, pk):
     """Retrieve, update, or delete an ingredient"""
     try:
@@ -51,6 +53,7 @@ def ingredient_detail(request, pk):
 # ============ ITEM VIEWS ============
 
 @api_view(['GET', 'POST'])
+@permission_classes([permissions.IsAuthenticated])
 def item_list_create(request):
     """List all items or create a new item"""
     if request.method == 'GET':
@@ -67,6 +70,7 @@ def item_list_create(request):
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([permissions.IsAuthenticated])
 def item_detail(request, pk):
     """Retrieve, update, or delete an item"""
     try:
@@ -93,6 +97,7 @@ def item_detail(request, pk):
 # ============ UTILITY VIEWS ============
 
 @api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
 def low_stock_ingredients(request):
     """Get all ingredients that are at or below minimum stock level"""
     ingredients = Ingredient.objects.all()

@@ -9,6 +9,7 @@ import AdminDashboard from '../pages/admin/Dashboard';
 import AdminInventory from '../pages/admin/Inventory';
 import Reports from '../pages/admin/Reports';
 import Population from '../pages/admin/Population';
+import SimulationDashboard from '../pages/admin/SimulationDashboard';
 import ManagerDashboard from '../pages/manager/Dashboard';
 import ManagerInventory from '../pages/manager/Inventory';
 
@@ -33,7 +34,8 @@ const AppRoutes = () => {
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
       <Route path="/admin/inventory" element={<AdminInventory />} />
       <Route path="/admin/reports" element={<Reports />} />
-      <Route path="/admin/population" element={<Population />} />
+      <Route path="/admin/customers" element={<Population />} />
+      <Route path="/admin/flow" element={<SimulationDashboard />} />
       
       {/* Manager routes */}
       <Route path="/manager/dashboard" element={<ManagerDashboard />} />

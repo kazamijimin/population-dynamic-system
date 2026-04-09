@@ -1,29 +1,29 @@
 from rest_framework import serializers
-from .models import Household, PopulationRecord, Zone, LifeEvent
+from .models import Household, PopulationRecord, Zone, ShopEvent, SimulationSettings
 
 class ZoneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Zone
         fields = '__all__'
 
-class LifeEventSerializer(serializers.ModelSerializer):
+class ShopEventSerializer(serializers.ModelSerializer):
     class Meta:
-        model = LifeEvent
+        model = ShopEvent
         fields = '__all__'
 
 class PopulationRecordSerializer(serializers.ModelSerializer):
-    """Serializer for individual population members"""
+    """Serializer for individual guest/customer records"""
     age = serializers.ReadOnlyField()
-    household_name = serializers.CharField(source='household.house_number', read_only=True)
+    location_name = serializers.CharField(source='household.location_id', read_only=True)
     zone_name = serializers.CharField(source='household.zone.name', read_only=True)
-    events = LifeEventSerializer(many=True, read_only=True, source='life_events')
+    events = ShopEventSerializer(many=True, read_only=True, source='shop_events')
 
     class Meta:
         model = PopulationRecord
         fields = [
             'id', 'first_name', 'last_name', 'middle_name', 
             'birth_date', 'gender', 'civil_status', 
-            'employment_status', 'household', 'household_name', 'zone_name',
+            'employment_status', 'household', 'location_name', 'zone_name',
             'is_voter', 'age', 'status', 'is_manually_updated', 'created_at', 'events'
         ]
 
@@ -39,3 +39,7 @@ class HouseholdSerializer(serializers.ModelSerializer):
             'id', 'house_number', 'address', 'zone', 'zone_name',
             'contact_number', 'member_count', 'members', 'created_at'
         ]
+class SimulationSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SimulationSettings
+        fields = "__all__"

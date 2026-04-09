@@ -1,9 +1,10 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://coffee-grind.onrender.com/api",
-  // baseURL: "http://localhost:5173/api",
+  baseURL: "http://localhost:8000/api",
   withCredentials: true,
+  xsrfCookieName: 'csrftoken',
+  xsrfHeaderName: 'X-CSRFToken',
 });
 
 export default api;

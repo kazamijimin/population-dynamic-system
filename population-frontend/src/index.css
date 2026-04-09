@@ -1,13 +1,42 @@
 @import "tailwindcss";
 
-/* Base styles */
-body {
-  @apply bg-gray-100 text-gray-800 font-sans antialiased min-h-screen;
+@config "../tailwind.config.js";
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a;
+}
+
+:root.dark {
+  --background: #020617;
+  --foreground: #e2e8f0;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--background) !important;
+  color: var(--foreground) !important;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Force dark mode colors on elements when .dark class is present */
+.dark body {
+  background-color: #020617 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark * {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+#root {
+  min-height: 100vh;
 }
 
 /* Link styles */
 a {
-  @apply font-medium text-indigo-600 hover:text-indigo-500 transition-colors;
+  @apply font-medium text-violet-400 hover:text-violet-300 transition-colors;
 }
 
 /* Default button styles */
@@ -22,11 +51,11 @@ button {
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-200 rounded-full;
+  @apply bg-slate-700/20;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-400 rounded-full hover:bg-gray-500;
+  @apply bg-violet-500/40 rounded-full hover:bg-violet-500/60;
 }
 
 /* Card hover effect utility */
@@ -34,13 +63,56 @@ button {
   @apply hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200;
 }
 
-/* Spinner animation */
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+/* Modern Animations */
+@keyframes blob {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
   }
 }
 
-.animate-spin {
-  animation: spin 1s linear infinite;
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(139, 92, 246, 0.6);
+  }
+}
+
+/* Blob animation */
+.animate-blob {
+  animation: blob 7s infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+/* Float animation */
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Glow animation */
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
 }
