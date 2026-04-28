@@ -27,6 +27,12 @@ export const commonApi = {
     // Simulation Settings
     getSimulationSettings: () => api.get('/common/simulation-settings/'),
     updateSimulationSetting: (id, data) => api.patch(`/common/simulation-settings/${id}/`, data),
+
+    // Operational Schedules
+    getSchedules: (params) => api.get('/common/schedules/', { params }),
+    createSchedule: (data) => api.post('/common/schedules/', data),
+    updateSchedule: (id, data) => api.patch(`/common/schedules/${id}/`, data),
+    deleteSchedule: (id) => api.delete(`/common/schedules/${id}/`),
 };
 
 export default commonApi;

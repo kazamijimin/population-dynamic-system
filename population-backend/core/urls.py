@@ -7,4 +7,5 @@ urlpatterns = [
     path('inventory/', include('core.inventory.urls')),
     path('common/', include('core.common.urls')),
     path('analytics/', include('core.analytics.urls')),
+    path('simulation/', include('core.simulation.urls')),
 ]

@@ -1,4 +1,4 @@
-// population-frontend/src/api/users.api.js
+﻿// population-frontend/src/api/users.api.js
 import api from './axios';
 
 export const registerRequest = async (userData) => {
@@ -19,4 +19,25 @@ export const logoutRequest = async () => {
 export const fetchCurrentUser = async () => {
   const response = await api.get('/auth/current/');
   return response.data;
+};
+
+export const updateProfile = async (profileData) => {
+  const response = await api.patch('/auth/profile/update/', profileData);
+  return response.data;
+};
+
+export const fetchActivityHistory = async () => {
+  const response = await api.get('/auth/activity/');
+  return response.data;
+};
+
+// Admin User Management
+export const adminApi = {
+  getUsers: () => api.get('/auth/admin/users/'),
+  createUser: (data) => api.post('/auth/admin/users/', data),
+  updateUser: (id, data) => api.patch(`/auth/admin/users/${id}/`, data),
+  deleteUser: (id) => api.delete(`/auth/admin/users/${id}/`),
+  toggleStatus: (id) => api.post(`/auth/admin/users/${id}/toggle_status/`),
+  resetPassword: (id, password) => api.post(`/auth/admin/users/${id}/reset_password/`, { password }),
+  getActivityLogs: () => api.get('/auth/admin/activity-logs/'),
 };

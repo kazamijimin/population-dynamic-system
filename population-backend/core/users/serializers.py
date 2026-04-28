@@ -8,19 +8,19 @@ UserModel = get_user_model()
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserModel
-        fields = ['id', 'username', 'email', 'role', 'first_name', 'last_name', 'date_joined']
+        fields = ['id', 'username', 'email', 'role', 'first_name', 'last_name', 'profile_picture', 'date_joined']
         read_only_fields = ['id', 'date_joined']
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    password_confirm = serializers.CharField(write_only=True, required=True)
+    password_confirm = serializers.CharField(write_only=True, required=False)
     password = serializers.CharField(write_only=True, required=True)
 
     class Meta:
         model = UserModel
         fields = ['username', 'email', 'password', 'password_confirm', 'first_name', 'last_name', 'role']
         extra_kwargs = {
-            'first_name': {'required': True},
-            'last_name': {'required': True},
+            'first_name': {'required': False},
+            'last_name': {'required': False},
             'email': {'required': True}
         }
 
@@ -29,12 +29,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        if data['password'] != data['password_confirm']:
+        # Only require matching if password_confirm is provided (it's required in the view/frontend mostly)
+        if 'password_confirm' in data and data['password'] != data['password_confirm']:
             raise serializers.ValidationError({"password_confirm": "Passwords must match."})
         return data
 
     def create(self, validated_data):
-        validated_data.pop('password_confirm')
+        if 'password_confirm' in validated_data:
+            validated_data.pop('password_confirm')
         password = validated_data.pop('password')
         user = UserModel.objects.create(**validated_data)
         user.set_password(password)

@@ -32,10 +32,16 @@ const Login = () => {
     if (result.success) {
       // Redirect based on user role
       const user = result.user || currentUser;
-      if (user?.role === 'manager') {
+      const role = user?.role || 'staff';
+      
+      console.log('Login successful, role:', role);
+      
+      if (role === 'manager') {
         navigate('/manager/dashboard');
-      } else {
+      } else if (role === 'admin') {
         navigate('/admin/dashboard');
+      } else {
+        navigate('/staff/profile');
       }
     } else {
       setErrorMsg(result.message || 'Login failed');

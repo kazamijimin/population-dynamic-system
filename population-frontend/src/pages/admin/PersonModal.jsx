@@ -92,15 +92,15 @@ export default function PersonModal({ isOpen, onClose, person, households, zones
           </div>
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Dining Table / Area</label>
-            <select value={formData.household} onChange={e => setFormData({...formData, household: e.target.value})} className="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-amber-500 transition-all shadow-sm">
-              <option value="">To-Go / Floating</option>
-              {households.map(h => <option key={h.id} value={h.id}>Table {h.house_number} ({h.head_of_family_name})</option>)}
+            <select required value={formData.household} onChange={e => setFormData({...formData, household: e.target.value})} className="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-amber-500 transition-all shadow-sm">
+              <option value="">Select Table/Area</option>
+              {households.map(h => <option key={h.id} value={h.id}>Table {h.location_id}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Shop Zone</label>
             <select value={formData.zone} onChange={e => setFormData({...formData, zone: e.target.value})} className="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-amber-500 transition-all shadow-sm">
-              <option value="">Select Zone</option>
+              <option value="">(Inherited from Table)</option>
               {zones.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
             </select>
           </div>

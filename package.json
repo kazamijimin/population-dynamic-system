@@ -14,9 +14,11 @@
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.18",
     "concurrently": "^9.2.1",
+    "lucide-react": "^1.8.0",
     "tailwindcss": "^4.1.18"
   },
   "dependencies": {
-    "@heroicons/react": "^2.2.0"
+    "@heroicons/react": "^2.2.0",
+    "cors": "^2.8.6"
   }
 }

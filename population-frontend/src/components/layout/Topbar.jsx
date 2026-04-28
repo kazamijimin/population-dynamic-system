@@ -34,11 +34,11 @@ export default function Topbar() {
 
         <div className="hidden md:flex items-center gap-1 bg-slate-100 dark:bg-white/5 p-1 rounded-2xl border border-slate-200 dark:border-white/10">
           {[
-            { label: 'Dashboard', path: '/admin/dashboard', icon: '📊' },
-            { label: 'Inventory', path: '/admin/inventory', icon: '📦' },
-            { label: 'Customers', path: '/admin/customers', icon: '👥' },
-            { label: 'Staff', path: '/admin/users', icon: '🔒' },
-          ].map((item) => (
+            { label: 'Dashboard', path: '/admin/dashboard', icon: '📊', roles: ['admin', 'manager', 'staff'] },
+            { label: 'Inventory', path: '/admin/inventory', icon: '📦', roles: ['admin', 'manager'] },
+            { label: 'Customers', path: '/admin/customers', icon: '👥', roles: ['admin', 'manager'] },
+            { label: 'Staff', path: '/admin/users', icon: '🔒', roles: ['admin'] },
+          ].filter(item => item.roles.includes(currentUser?.role)).map((item) => (
             <Link 
               key={item.path}
               to={item.path} 

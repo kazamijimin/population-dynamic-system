@@ -1,5 +1,5 @@
 // population-frontend/src/contexts/AuthProvider.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AuthContext } from './AuthContext';
 import { 
   loginRequest, 
@@ -13,21 +13,27 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
 
-  useEffect(() => {
-    verifyAuthentication();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const verifyAuthentication = async () => {
+  const checkAuthStatus = useCallback(async () => {
     try {
       const userData = await fetchCurrentUser();
       setCurrentUser(userData);
+      return userData;
     } catch {
       setCurrentUser(null);
-    } finally {
-      setIsLoading(false);
+      return null;
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const verifyAuthentication = async () => {
+      try {
+        await checkAuthStatus();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    verifyAuthentication();
+  }, [checkAuthStatus]);
 
   const handleLogin = async (username, password) => {
     try {
@@ -77,7 +83,8 @@ export const AuthProvider = ({ children }) => {
     authError,
     handleLogin,
     handleRegister,
-    handleLogout
+    handleLogout,
+    checkAuthStatus
   };
 
   return (

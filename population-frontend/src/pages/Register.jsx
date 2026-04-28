@@ -42,6 +42,8 @@ const Register = () => {
       // Redirect based on selected role
       if (formData.role === 'manager') {
         navigate('/manager/dashboard');
+      } else if (formData.role === 'staff') {
+        navigate('/staff/terminal');
       } else {
         navigate('/admin/dashboard');
       }
@@ -215,6 +217,7 @@ const Register = () => {
               >
                 <option value="manager">Manager</option>
                 <option value="admin">Administrator</option>
+                <option value="staff">Staff</option>
               </select>
             </div>
           </div>

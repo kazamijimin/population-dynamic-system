@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Household, PopulationRecord, Zone, ShopEvent, SimulationSettings
+from .models import Household, PopulationRecord, Zone, ShopEvent, SimulationSettings, OperationalSchedule
 
 class ZoneSerializer(serializers.ModelSerializer):
     class Meta:
@@ -36,10 +36,15 @@ class HouseholdSerializer(serializers.ModelSerializer):
     class Meta:
         model = Household
         fields = [
-            'id', 'house_number', 'address', 'zone', 'zone_name',
-            'contact_number', 'member_count', 'members', 'created_at'
+            'id', 'location_id', 'zone', 'zone_name',
+            'capacity', 'member_count', 'members', 'created_at'
         ]
 class SimulationSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = SimulationSettings
         fields = "__all__"
+
+class OperationalScheduleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OperationalSchedule
+        fields = '__all__'

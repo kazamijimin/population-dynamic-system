@@ -114,6 +114,29 @@ class ShopEvent(models.Model):
             self.person.save()
         super().save(*args, **kwargs)
 
+# --- Added Schedule Model ---
+
+class OperationalSchedule(models.Model):
+    SHIFT_STATUS = [
+        ('Pending', 'Pending'),
+        ('In Progress', 'In Progress'),
+        ('Completed', 'Completed'),
+        ('Cancelled', 'Cancelled'),
+    ]
+
+    task_name = models.CharField(max_length=200)
+    scheduled_time = models.CharField(max_length=100, help_text="e.g., 08:00 - 12:00")
+    node_id = models.CharField(max_length=50, default="Node_01")
+    status = models.CharField(max_length=20, choices=SHIFT_STATUS, default='Pending')
+    priority = models.IntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.task_name} ({self.node_id})"
+
+    class Meta:
+        ordering = ['priority', 'created_at']
+
 class SimulationSettings(models.Model):
     """Global configuration for coffee shop customer flow simulations"""
     customer_arrival_rate = models.FloatField(default=1.2, help_text="Average new customers per hour")

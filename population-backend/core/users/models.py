@@ -6,10 +6,12 @@ class CustomUser(AbstractUser):
     USER_ROLES = [
         ('admin', 'Administrator'),
         ('manager', 'Manager'),
+        ('staff', 'Staff'),
     ]
     
-    role = models.CharField(max_length=20, choices=USER_ROLES, default='manager')
+    role = models.CharField(max_length=20, choices=USER_ROLES, default='staff')
     email = models.EmailField(unique=True)
+    profile_picture = models.TextField(null=True, blank=True)
     date_joined = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
     

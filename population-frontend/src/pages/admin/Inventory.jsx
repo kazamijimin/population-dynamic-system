@@ -1,6 +1,8 @@
-﻿import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import * as inventoryApi from '../../api/inventory.api';
 import { analyticsApi } from '../../api/analytics.api';
+import Sidebar from '../../components/layout/Sidebar';
 import Topbar from '../../components/layout/Topbar';
 
 const Inventory = () => {
@@ -29,11 +31,7 @@ const Inventory = () => {
     'MEAL': 'bg-rose-500/20 text-rose-400 border-rose-500/30',
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [activeTab]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       if (activeTab === 'ingredients') {
         const data = await inventoryApi.getIngredients();
@@ -44,19 +42,30 @@ const Inventory = () => {
       }
       const history = await analyticsApi.getHistoricalData();
       setHistoricalData(history);
-    } catch (err) {
+    } catch {
       setError('System communication failure. Inventory registry unreachable.');
     }
-  };
+  }, [activeTab]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadData = async () => {
+      if (isMounted) {
+        await fetchData();
+      }
+    };
+    loadData();
+    return () => { isMounted = false; };
+  }, [fetchData]);
 
   const handleCreateIngredient = async (e) => {
     e.preventDefault();
     try {
       await inventoryApi.createIngredient(ingredientForm);
       setShowModal(false);
-      setIngredientForm({ name: '', quantity: '', unit: 'kg', min_stock_level: '', cost_per_unit: '' });
-      fetchData();
-    } catch (err) {
+      setIngredientForm({ name: '', quantity: '', unit: 'kg', min_stock_level: '', cost_per_unit: '', is_restock_suggestion_active: false, restock_override_amount: '' });
+      await fetchData();
+    } catch {
       setError('Security violation or validation error during stock write.');
     }
   };
@@ -65,8 +74,8 @@ const Inventory = () => {
     if (window.confirm('IRREVERSIBLE ACTION: Purge ingredient from global registry?')) {
       try {
         await inventoryApi.deleteIngredient(id);
-        fetchData();
-      } catch (err) {
+        await fetchData();
+      } catch {
         setError('Authorization failure: Purge request denied.');
       }
     }
@@ -76,8 +85,8 @@ const Inventory = () => {
     if (window.confirm('IRREVERSIBLE ACTION: Archive menu item?')) {
       try {
         await inventoryApi.deleteItem(id);
-        fetchData();
-      } catch (err) {
+        await fetchData();
+      } catch {
         setError('Authorization failure: Archive request denied.');
       }
     }
@@ -92,33 +101,35 @@ const Inventory = () => {
 
     try {
       await analyticsApi.uploadHistoricalData(formData);
-      fetchData();
+      await fetchData();
       alert('TRAINING DATA INGESTED SUCCESSFULLY');
-    } catch (err) {
+    } catch {
       setError('Data corruption or invalid format detected in upload.');
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-gradient-to-br dark:from-indigo-950 dark:via-slate-900 dark:to-black relative overflow-hidden transition-colors duration-500">
-      {/* Animated Background Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-40 dark:opacity-100 transition-opacity">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-violet-600 rounded-full mix-blend-multiply filter blur-3xl dark:opacity-20 opacity-10 animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-600 rounded-full mix-blend-multiply filter blur-3xl dark:opacity-20 opacity-10 animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-fuchsia-700 rounded-full mix-blend-multiply filter blur-3xl dark:opacity-20 opacity-10 animate-blob animation-delay-4000"></div>
-      </div>
+    <div className="min-h-screen bg-slate-50 dark:bg-linear-to-br dark:from-indigo-950 dark:via-slate-900 dark:to-black relative overflow-hidden transition-colors duration-500 italic">
+      <div className="flex relative z-10 w-full h-screen">
+        <Sidebar />
+        <div className="flex-1 flex flex-col h-screen overflow-hidden">
+          <Topbar />
+          {/* Animated Background Elements */}
+          <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-40 dark:opacity-100 transition-opacity">
+            <div className="absolute -top-40 -right-40 w-80 h-80 bg-violet-600 rounded-full mix-blend-multiply filter blur-3xl dark:opacity-20 opacity-10 animate-blob"></div>
+            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-600 rounded-full mix-blend-multiply filter blur-3xl dark:opacity-20 opacity-10 animate-blob animation-delay-2000"></div>
+            <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-fuchsia-700 rounded-full mix-blend-multiply filter blur-3xl dark:opacity-20 opacity-10 animate-blob animation-delay-4000"></div>
+          </div>
 
-      {/* Content */}
-      <div className="relative z-10">
-      <Topbar />
-      <div className="max-w-7xl mx-auto space-y-8 p-4 md:p-8">
+          <div className="flex-1 overflow-y-auto p-4 md:p-8 w-full">
+            <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pt-6">
           <div className="space-y-3">
             <h1 className="text-6xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic drop-shadow-sm">
               Supply Chain <span className="text-violet-600 dark:text-violet-300">Hub</span>
             </h1>
-            <div className="flex items-center gap-3 bg-white dark:bg-gradient-to-r dark:from-violet-500/10 dark:to-fuchsia-600/10 backdrop-blur-md border border-slate-200 dark:border-violet-500/20 rounded-full px-4 py-2 w-fit shadow-sm dark:shadow-none">
+            <div className="flex items-center gap-3 bg-white dark:bg-linear-to-r dark:from-violet-500/10 dark:to-fuchsia-600/10 backdrop-blur-md border border-slate-200 dark:border-violet-500/20 rounded-full px-4 py-2 w-fit shadow-sm dark:shadow-none">
               <div className="w-2 h-2 bg-violet-500 dark:bg-violet-400 rounded-full animate-pulse shadow-lg" />
               <p className="text-slate-500 dark:text-violet-300 font-black font-mono text-xs tracking-[0.3em] uppercase">MODULE_STOCK_V2 // SECURITY_LVL: ADMIN</p>
             </div>
@@ -126,7 +137,7 @@ const Inventory = () => {
           <div className="flex gap-3">
             <button
               onClick={() => setShowHistoryModal(true)}
-              className="group relative px-6 py-4 rounded-2xl font-black uppercase text-xs tracking-widest overflow-hidden bg-white dark:bg-gradient-to-br dark:from-slate-700 dark:to-slate-800 text-slate-600 dark:text-slate-200 border border-slate-200 dark:border-slate-600/50 hover:border-violet-500 transition-all hover:shadow-xl shadow-sm"
+              className="group relative px-6 py-4 rounded-2xl font-black uppercase text-xs tracking-widest overflow-hidden bg-white dark:bg-linear-to-br dark:from-slate-700 dark:to-slate-800 text-slate-600 dark:text-slate-200 border border-slate-200 dark:border-slate-600/50 hover:border-violet-500 transition-all hover:shadow-xl shadow-sm"
             >
               <div className="relative flex items-center gap-3">
                 <svg className="w-5 h-5 group-hover:animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
@@ -135,7 +146,7 @@ const Inventory = () => {
             </button>
             <button
               onClick={() => setShowModal(true)}
-              className="group relative px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest overflow-hidden bg-violet-600 dark:bg-gradient-to-br dark:from-violet-500 dark:via-violet-600 dark:to-fuchsia-700 text-white border border-violet-400/50 hover:border-white transition-all hover:shadow-2xl hover:shadow-violet-500/50 active:scale-95"
+              className="group relative px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest overflow-hidden bg-violet-600 dark:bg-linear-to-br dark:from-violet-500 dark:via-violet-600 dark:to-fuchsia-700 text-white border border-violet-400/50 hover:border-white transition-all hover:shadow-2xl hover:shadow-violet-500/50 active:scale-95"
             >
               <div className="relative flex items-center gap-3">
                 <div className="w-6 h-6 bg-white/20 group-hover:bg-white/30 rounded-full flex items-center justify-center backdrop-blur-sm">
@@ -316,11 +327,12 @@ const Inventory = () => {
           )}
         </div>
       </div>
-      </div>
+    </div>
+  </div>
 
-      {/* Modern Modal Overlays */}
-      {showModal && (
-        <div className="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-xl flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
+  {/* Modern Modal Overlays */}
+  {showModal && (
+        <div className="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-xl flex items-center justify-center z-100 p-4 animate-in fade-in duration-300">
           <div className="bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-300 border border-slate-200 dark:border-slate-800 transition-colors">
             {/* Modal Header */}
             <div className="px-10 py-12 bg-violet-600 text-white flex justify-between items-center relative overflow-hidden">
@@ -361,7 +373,7 @@ const Inventory = () => {
                   <FormInput type="number" label="Cost (₱)" value={ingredientForm.cost_per_unit} onChange={(v) => setIngredientForm({ ...ingredientForm, cost_per_unit: v })} />
                 </div>
 
-                <button type="submit" className="w-full py-6 bg-violet-600 dark:bg-gradient-to-r dark:from-violet-600 dark:to-indigo-700 text-white rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-xl shadow-violet-500/30 hover:shadow-2xl transition-all active:scale-95">
+                <button type="submit" className="w-full py-6 bg-violet-600 dark:bg-linear-to-r dark:from-violet-600 dark:to-indigo-700 text-white rounded-4xl font-black uppercase tracking-[0.2em] shadow-xl shadow-violet-500/30 hover:shadow-2xl transition-all active:scale-95">
                    INITIATE_SUPPLY
                 </button>
               </form>
@@ -372,7 +384,7 @@ const Inventory = () => {
 
       {/* History Data Portal */}
       {showHistoryModal && (
-        <div className="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-xl flex items-center justify-center z-[101] p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-xl flex items-center justify-center z-101 p-4 animate-in fade-in duration-300">
           <div className="bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-slate-200 dark:border-slate-800 transition-colors">
             <div className="px-10 py-8 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white flex justify-between items-center border-b border-slate-200 dark:border-slate-700">
               <div>
@@ -394,7 +406,7 @@ const Inventory = () => {
                 </div>
               </div>
 
-              <div className="space-y-3 max-h-[300px] overflow-y-auto">
+              <div className="space-y-3 max-h-75 overflow-y-auto">
                 {historicalData.map(data => (
                   <div key={data.id} className="flex items-center justify-between p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700 group hover:border-violet-500/30 transition-all">
                     <div className="flex items-center gap-4">
@@ -418,38 +430,39 @@ const Inventory = () => {
         </div>
       )}
     </div>
+  </div>
+);
+};
+
+// ============ DESIGN HELPER COMPONENTS ============
+function FormInput({ label, type = "text", value, ...props }) {
+  return (
+    <div className="space-y-2 w-full">
+      <label className="block text-[10px] font-black text-slate-400 dark:text-violet-400 uppercase tracking-widest leading-none pl-1">{label}</label>
+      <input 
+        type={type}
+        value={value}
+        className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-violet-500 font-bold text-slate-900 dark:text-slate-100 transition-all shadow-sm"
+        {...props}
+      />
+    </div>
   );
+}
 
-  // ============ DESIGN HELPER COMPONENTS ============
-  function FormInput({ label, type = "text", ...props }) {
-    return (
-      <div className="space-y-2 w-full">
-        <label className="block text-[10px] font-black text-slate-400 dark:text-violet-400 uppercase tracking-widest leading-none pl-1">{label}</label>
-        <input 
-          type={type}
-          className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-violet-500 font-bold text-slate-900 dark:text-slate-100 transition-all shadow-sm"
-          {...props}
-          onChange={(e) => props.onChange(e.target.value)}
-        />
-      </div>
-    );
-  }
-
-  function FormSelect({ label, options, ...props }) {
-    return (
-      <div className="space-y-2 w-full">
-        <label className="block text-[10px] font-black text-slate-400 dark:text-violet-400 uppercase tracking-widest leading-none pl-1">{label}</label>
-        <select 
-          className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-violet-500 font-black text-xs uppercase tracking-widest text-slate-900 dark:text-slate-100 appearance-none cursor-pointer shadow-sm"
-          {...props}
-          onChange={(e) => props.onChange(e.target.value)}
-        >
-          {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-        </select>
-      </div>
-    );
-  }
+function FormSelect({ label, options, ...props }) {
+  return (
+    <div className="space-y-2 w-full">
+      <label className="block text-[10px] font-black text-slate-400 dark:text-violet-400 uppercase tracking-widest leading-none pl-1">{label}</label>
+      <select 
+        className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-violet-500 font-black text-xs uppercase tracking-widest text-slate-900 dark:text-slate-100 appearance-none cursor-pointer shadow-sm"
+        {...props}
+        onChange={(e) => props.onChange(e.target.value)}
+      >
+        {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+      </select>
+    </div>
+  );
 }
 
 export default Inventory;
-Tune into. 
+ 
