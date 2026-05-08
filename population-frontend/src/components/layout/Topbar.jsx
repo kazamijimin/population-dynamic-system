@@ -1,94 +1,190 @@
-import { useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { AuthContext } from '../../contexts/AuthContext';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useContext, useMemo } from "react";
+import { useLocation, useNavigate, Link } from "react-router-dom";
+import { Bell, LogOut, MoonStar, Search, Sparkles, SunMedium } from "lucide-react";
+import { AuthContext } from "../../contexts/AuthContext";
+import { useTheme } from "../../contexts/ThemeContext";
+
+const quickLinks = {
+  admin: [
+    { label: "Overview", path: "/admin/dashboard" },
+    { label: "Inventory", path: "/admin/inventory" },
+    { label: "Reports", path: "/admin/reports" },
+    { label: "Access", path: "/admin/users" },
+  ],
+  manager: [
+    { label: "Overview", path: "/manager/dashboard" },
+    { label: "Flow", path: "/manager/flow" },
+    { label: "Sales", path: "/manager/sales" },
+    { label: "Reports", path: "/manager/reports" },
+  ],
+  staff: [
+    { label: "Terminal", path: "/staff/terminal" },
+    { label: "Profile", path: "/staff/profile" },
+  ],
+};
+
+const roleLabels = {
+  admin: "Administrator",
+  manager: "Manager",
+  staff: "Staff",
+};
+
+const roleTheme = {
+  admin: {
+    accentGradient: "from-violet-600 to-fuchsia-500",
+    accentText: "text-violet-500",
+    accentHover: "hover:text-violet-700",
+    navActive: "bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-[0_14px_26px_-18px_rgba(124,58,237,0.72)]",
+    navIdle: "text-slate-500 hover:text-violet-700 hover:bg-white dark:text-slate-300 dark:hover:text-white dark:hover:bg-white/8",
+    dot: "bg-violet-500",
+  },
+  manager: {
+    accentGradient: "from-emerald-600 to-teal-500",
+    accentText: "text-emerald-500",
+    accentHover: "hover:text-emerald-700",
+    navActive: "bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-[0_14px_26px_-18px_rgba(16,185,129,0.72)]",
+    navIdle: "text-slate-500 hover:text-emerald-700 hover:bg-white dark:text-slate-300 dark:hover:text-white dark:hover:bg-white/8",
+    dot: "bg-emerald-500",
+  },
+  staff: {
+    accentGradient: "from-amber-500 to-orange-500",
+    accentText: "text-amber-500",
+    accentHover: "hover:text-amber-700",
+    navActive: "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-[0_14px_26px_-18px_rgba(245,158,11,0.72)]",
+    navIdle: "text-slate-500 hover:text-amber-700 hover:bg-white dark:text-slate-300 dark:hover:text-white dark:hover:bg-white/8",
+    dot: "bg-amber-500",
+  },
+};
 
 export default function Topbar() {
   const { currentUser, handleLogout } = useContext(AuthContext);
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const isDark = theme === 'dark';
+  const location = useLocation();
+
+  const role = currentUser?.role || "staff";
+  const isDark = theme === "dark";
+  const links = quickLinks[role] || quickLinks.staff;
+  const homePath = links[0]?.path || "/login";
+  const colors = roleTheme[role] || roleTheme.admin;
+
+  const initials = useMemo(() => {
+    const source =
+      currentUser?.first_name ||
+      currentUser?.username ||
+      currentUser?.email ||
+      roleLabels[role];
+    return String(source)
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("");
+  }, [currentUser, role]);
 
   const handleExit = async () => {
     try {
       await handleLogout();
-      navigate('/login');
     } catch (error) {
-      console.error('Logout failed:', error);
-      navigate('/login');
+      console.error("Logout failed:", error);
+    } finally {
+      navigate("/login");
     }
   };
 
   return (
-    <nav className="bg-white/80 dark:bg-slate-900/50 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 px-8 py-3 flex items-center justify-between sticky top-0 z-50 transition-colors duration-300">
-      <div className="flex items-center gap-8">
-        <Link to="/admin/dashboard" className="text-xl font-black tracking-tighter text-slate-900 dark:text-white group flex items-center gap-2">
-          <div className="w-10 h-10 bg-violet-600 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-all shadow-lg shadow-violet-500/30">
-            <span className="text-xl">⚡</span>
-          </div>
-          <div className="flex flex-col leading-none">
-            <span className="text-[14px] uppercase italic">Supply</span>
-            <span className="text-[10px] text-violet-600 dark:text-violet-400 font-bold uppercase tracking-widest">Nexus Hub</span>
-          </div>
-        </Link>
+    <nav className="sticky top-0 z-50 border-b border-slate-200/80 dark:border-white/8 bg-white/88 dark:bg-slate-950/82 backdrop-blur-2xl px-4 sm:px-6 lg:px-8 py-4">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex items-center gap-4 min-w-0">
+          <Link to={homePath} className="flex items-center gap-3 xl:hidden">
+            <div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${colors.accentGradient} text-white flex items-center justify-center shadow-[0_16px_28px_-18px_rgba(124,58,237,0.68)]`}>
+              <Sparkles size={20} />
+            </div>
+            <div>
+              <p className={`text-[11px] uppercase tracking-[0.24em] font-semibold ${colors.accentText}`}>
+                Population
+              </p>
+              <p className="text-lg font-bold tracking-tight text-slate-950 dark:text-white">
+                Neural Hub
+              </p>
+            </div>
+          </Link>
 
-        <div className="hidden md:flex items-center gap-1 bg-slate-100 dark:bg-white/5 p-1 rounded-2xl border border-slate-200 dark:border-white/10">
-          {[
-            { label: 'Dashboard', path: '/admin/dashboard', icon: '📊', roles: ['admin', 'manager', 'staff'] },
-            { label: 'Inventory', path: '/admin/inventory', icon: '📦', roles: ['admin', 'manager'] },
-            { label: 'Customers', path: '/admin/customers', icon: '👥', roles: ['admin', 'manager'] },
-            { label: 'Staff', path: '/admin/users', icon: '🔒', roles: ['admin'] },
-          ].filter(item => item.roles.includes(currentUser?.role)).map((item) => (
-            <Link 
-              key={item.path}
-              to={item.path} 
-              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
-                window.location.pathname === item.path 
-                ? 'bg-white dark:bg-violet-600 text-violet-600 dark:text-white shadow-sm' 
-                : 'text-slate-500 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-white/50 dark:hover:bg-white/5'
-              }`}
-            >
-              <span className="text-sm">{item.icon}</span>
-              {item.label}
-            </Link>
-          ))}
+          <div className="hidden xl:flex items-center gap-2 rounded-[22px] border border-slate-200/80 dark:border-white/8 bg-slate-50/90 dark:bg-white/5 p-1.5">
+            {links.map((item) => {
+              const active = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`px-4 h-10 inline-flex items-center rounded-2xl text-sm font-semibold transition-all ${
+                    active
+                      ? colors.navActive
+                      : colors.navIdle
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
         </div>
-      </div>
-      
-      <div className="flex items-center gap-6">
-        {/* Theme Toggle */}
-        <button 
-          onClick={toggleTheme}
-          className="p-3 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:scale-110 active:scale-95 transition-all shadow-inner"
-        >
-          {isDark ? (
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.071 16.071l.707.707M7.929 7.929l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
-            </svg>
-          ) : (
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-            </svg>
-          )}
-        </button>
 
-        <div className="h-8 w-[1px] bg-slate-200 dark:bg-white/10" />
-
-        <div className="flex items-center gap-4">
-          <div className="text-right hidden sm:block">
-            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1">Authenticated</p>
-            <p className="text-sm font-bold text-slate-900 dark:text-slate-100 tracking-tight">{currentUser?.username || 'Root Admin'}</p>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center">
+          <div className="relative min-w-0 md:w-[280px] lg:w-[340px]">
+            <Search
+              size={18}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              type="text"
+              className="ds-search h-11 pl-11 pr-4 rounded-2xl"
+              placeholder="Search dashboards, people, or records..."
+            />
           </div>
-          
-          <button 
-            onClick={handleExit}
-            className="group w-12 h-12 flex items-center justify-center rounded-2xl bg-slate-100 dark:bg-white/5 hover:bg-rose-600 dark:hover:bg-rose-600 text-slate-400 dark:text-slate-400 hover:text-white dark:hover:text-white border border-slate-200 dark:border-white/10 hover:border-rose-500 transition-all shadow-xl active:scale-90"
-            title="Secure Logout"
-          >
-            <svg className="w-6 h-6 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-          </button>
+
+          <div className="flex items-center gap-2 self-end md:self-auto">
+            <button
+              type="button"
+              className="ds-btn ds-btn-secondary ds-btn-icon rounded-2xl"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+            >
+              {isDark ? <SunMedium size={18} /> : <MoonStar size={18} />}
+            </button>
+
+            <button
+              type="button"
+              className="relative ds-btn ds-btn-secondary ds-btn-icon rounded-2xl"
+              aria-label="Notifications"
+            >
+              <Bell size={18} />
+              <span className={`absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full ${colors.dot} border-2 border-white dark:border-slate-950`} />
+            </button>
+
+            <div className="flex items-center gap-3 rounded-[22px] border border-slate-200/80 dark:border-white/8 bg-white dark:bg-white/5 px-3 py-2 shadow-[0_12px_24px_-24px_rgba(15,23,42,0.4)]">
+              <div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${colors.accentGradient} text-white flex items-center justify-center font-bold shadow-[0_16px_28px_-18px_rgba(124,58,237,0.68)]`}>
+                {initials || "U"}
+              </div>
+              <div className="hidden sm:block leading-tight">
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {currentUser?.username || "Workspace User"}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {roleLabels[role]}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleExit}
+                className="ds-btn ds-btn-ghost ds-btn-icon rounded-2xl"
+                title="Logout"
+                aria-label="Logout"
+              >
+                <LogOut size={18} />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </nav>

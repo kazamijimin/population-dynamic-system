@@ -23,20 +23,31 @@ import ManagerSales from '../pages/manager/Sales';
 import Profile from '../pages/manager/Profile';
 import StaffTerminal from '../pages/staff/StaffTerminal';
 import StaffProfile from '../pages/staff/StaffProfile';
+import { getRoleHomePath } from '../utils/roleRoutes';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { currentUser, isLoading } = useContext(AuthContext);
   
   if (isLoading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontWeight: '900', fontStyle: 'italic', background: '#f8fafc', color: '#7c3aed' }}>CORE_LOADING...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 px-6">
+        <div className="ds-card ds-card-pad-lg max-w-md w-full text-center">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white flex items-center justify-center shadow-[0_18px_32px_-18px_rgba(124,58,237,0.68)]">
+            <span className="text-lg font-bold">AI</span>
+          </div>
+          <h2 className="mt-5 text-xl font-bold text-slate-900 dark:text-white">Preparing your workspace</h2>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            Syncing authenticated session and dashboard access.
+          </p>
+        </div>
+      </div>
+    );
   }
   
   if (!currentUser) return <Navigate to="/login" />;
   
   if (allowedRoles && !allowedRoles.includes(currentUser?.role)) {
-    // Redirect based on role if they try to access something they shouldn't
-    if (currentUser.role === 'staff') return <Navigate to="/staff/terminal" />;
-    return <Navigate to="/admin/dashboard" />;
+    return <Navigate to={getRoleHomePath(currentUser.role)} />;
   }
   
   return children;
@@ -61,6 +72,7 @@ const AppRoutes = () => {
       <Route path="/admin/flow" element={<ProtectedRoute allowedRoles={['admin']}><SimulationDashboard /></ProtectedRoute>} />
       <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['admin']}><Users /></ProtectedRoute>} />
       <Route path="/admin/activity" element={<ProtectedRoute allowedRoles={['admin']}><ActivityLogs /></ProtectedRoute>} />
+      <Route path="/admin/profile" element={<ProtectedRoute allowedRoles={['admin']}><Profile /></ProtectedRoute>} />
       
       {/* Manager specific routes */}
       <Route path="/manager/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><ManagerDashboard /></ProtectedRoute>} />
@@ -76,9 +88,17 @@ const AppRoutes = () => {
       <Route path="/staff/profile" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'staff']}><StaffProfile /></ProtectedRoute>} />
       
       {/* Default redirect */}
-      <Route path="/" element={<Navigate to="/login" />} />
+      <Route path="/" element={<RootRedirect />} />
     </Routes>
   );
+};
+
+const RootRedirect = () => {
+  const { currentUser, isLoading } = useContext(AuthContext);
+
+  if (isLoading) return null;
+
+  return <Navigate to={currentUser ? getRoleHomePath(currentUser.role) : "/login"} />;
 };
 
 export default AppRoutes;

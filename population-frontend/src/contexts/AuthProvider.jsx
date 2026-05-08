@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
       const response = await loginRequest(username, password);
       if (response.success) {
         setCurrentUser(response.user);
-        return { success: true };
+        return { success: true, user: response.user };
       }
       return { success: false, message: response.message };
     } catch (err) {

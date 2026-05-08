@@ -3,43 +3,254 @@ import { analyticsApi } from "../../api/analytics.api";
 import Topbar from "../../components/layout/Topbar";
 import Sidebar from "../../components/layout/Sidebar";
 import { 
-  TrendingUp, DollarSign, Calendar, Filter, 
-  ArrowUpRight, ArrowDownRight, ShoppingBag, 
-  Zap, Clock, Package, BarChart3, PieChart,
-  Download, RefreshCw, Layers
+  TrendingUp, DollarSign,
+  ArrowUpRight,
+  RefreshCw,
 } from "lucide-react";
+
+const fallbackSalesData = {
+  totalRevenue: 4250.8,
+  orders: 142,
+  averageOrder: 29.93,
+  conversionRate: "12.4%",
+  growth: "+8.2%",
+  topCategories: [
+    { name: "Beverages", value: 65, color: "bg-emerald-500" },
+    { name: "Bakery", value: 20, color: "bg-amber-500" },
+    { name: "Merchandise", value: 15, color: "bg-indigo-500" }
+  ],
+  hourlySales: [
+    { time: "08:00", sales: 450 },
+    { time: "10:00", sales: 820 },
+    { time: "12:00", sales: 1250 },
+    { time: "14:00", sales: 680 },
+    { time: "16:00", sales: 540 },
+    { time: "18:00", sales: 980 }
+  ],
+  sourceLabel: "Fallback dataset",
+};
+
+const categoryColors = ["bg-emerald-500", "bg-amber-500", "bg-indigo-500", "bg-teal-500", "bg-violet-500"];
+
+const getCollection = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.results)) return payload.results;
+  return [];
+};
+
+const toNumber = (value) => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const cleaned = value.replace(/[^0-9.-]/g, "");
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
+const readMetric = (source, keys) => {
+  if (!source || typeof source !== "object") return null;
+
+  for (const [key, value] of Object.entries(source)) {
+    const normalized = key.toLowerCase().replace(/[^a-z]/g, "");
+    if (keys.includes(normalized)) {
+      const numeric = toNumber(value);
+      if (numeric !== null) return numeric;
+    }
+
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      const nested = readMetric(value, keys);
+      if (nested !== null) return nested;
+    }
+  }
+
+  return null;
+};
+
+const readStringMetric = (source, keys) => {
+  if (!source || typeof source !== "object") return null;
+
+  for (const [key, value] of Object.entries(source)) {
+    const normalized = key.toLowerCase().replace(/[^a-z]/g, "");
+    if (keys.includes(normalized) && value != null) {
+      return String(value);
+    }
+
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      const nested = readStringMetric(value, keys);
+      if (nested) return nested;
+    }
+  }
+
+  return null;
+};
+
+const normalizeTimeLabel = (value, index) => {
+  if (!value) return `${String(8 + index * 2).padStart(2, "0")}:00`;
+  if (typeof value === "string" && /^\d{2}:\d{2}/.test(value)) return value.slice(0, 5);
+
+  const date = new Date(value);
+  if (!Number.isNaN(date.getTime())) {
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+  }
+
+  return String(value);
+};
+
+const buildCategoryMix = (rows) => {
+  const grouped = new Map();
+
+  rows.forEach((row) => {
+    const name = row.category || row.product_category || row.productType || row.item_type || row.type || row.name;
+    const metric = toNumber(
+      row.revenue ?? row.sales ?? row.amount ?? row.total ?? row.total_revenue ?? row.value ?? row.quantity
+    );
+
+    if (!name || metric === null) return;
+    grouped.set(name, (grouped.get(name) || 0) + metric);
+  });
+
+  const total = [...grouped.values()].reduce((sum, value) => sum + value, 0);
+  if (!total) return fallbackSalesData.topCategories;
+
+  return [...grouped.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([name, value], index) => ({
+      name,
+      value: Math.round((value / total) * 100),
+      color: categoryColors[index % categoryColors.length],
+    }));
+};
+
+const buildHourlySales = (rows) => {
+  const grouped = new Map();
+
+  rows.forEach((row) => {
+    const rawTime = row.time || row.hour || row.timestamp || row.date || row.datetime;
+    const amount = toNumber(row.revenue ?? row.sales ?? row.amount ?? row.total ?? row.total_revenue ?? row.value);
+    if (!rawTime || amount === null) return;
+
+    const label = normalizeTimeLabel(rawTime, grouped.size);
+    grouped.set(label, (grouped.get(label) || 0) + amount);
+  });
+
+  if (!grouped.size) return fallbackSalesData.hourlySales;
+
+  return [...grouped.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .slice(0, 8)
+    .map(([time, sales]) => ({ time, sales }));
+};
+
+const buildSalesData = ({ report, historicalRows, timeframe }) => {
+  const reportData = report?.data && typeof report.data === "object" ? report.data : {};
+  const rows = Array.isArray(historicalRows) ? historicalRows : [];
+
+  const totalRevenue =
+    readMetric(reportData, ["totalrevenue", "revenue", "sales", "totalsales"]) ??
+    rows.reduce((sum, row) => sum + (toNumber(row.revenue ?? row.sales ?? row.amount ?? row.total ?? row.total_revenue) || 0), 0);
+
+  const orders =
+    readMetric(reportData, ["orders", "ordervolume", "ordercount", "transactions"]) ??
+    rows.reduce((sum, row) => sum + (toNumber(row.orders ?? row.order_count ?? row.transactions ?? row.transaction_count) || 0), 0);
+
+  const averageOrder =
+    readMetric(reportData, ["averageorder", "avgticket", "averageticket", "averageordervalue"]) ??
+    (orders > 0 ? totalRevenue / orders : null);
+
+  const conversionRateRaw =
+    readStringMetric(reportData, ["conversionrate", "convrate"]) ??
+    readMetric(reportData, ["conversionrate", "convrate"]);
+
+  const growthRaw =
+    readStringMetric(reportData, ["growth", "growthrate", "revenuegrowth"]) ??
+    readMetric(reportData, ["growth", "growthrate", "revenuegrowth"]);
+
+  const topCategories = Array.isArray(reportData.topCategories)
+    ? reportData.topCategories.map((item, index) => ({
+        name: item.name || item.category || `Category ${index + 1}`,
+        value: Math.round(toNumber(item.value ?? item.percent ?? item.percentage) || 0),
+        color: item.color || categoryColors[index % categoryColors.length],
+      }))
+    : buildCategoryMix(rows);
+
+  const hourlySales = Array.isArray(reportData.hourlySales)
+    ? reportData.hourlySales.map((item, index) => ({
+        time: normalizeTimeLabel(item.time || item.hour, index),
+        sales: toNumber(item.sales ?? item.revenue ?? item.amount ?? item.total) || 0,
+      }))
+    : buildHourlySales(rows);
+
+  if (!totalRevenue && !orders && !rows.length && !Object.keys(reportData).length) {
+    return {
+      ...fallbackSalesData,
+      sourceLabel: "Fallback dataset",
+    };
+  }
+
+  return {
+    totalRevenue: totalRevenue || 0,
+    orders: orders || 0,
+    averageOrder: averageOrder || 0,
+    conversionRate: conversionRateRaw != null
+      ? (String(conversionRateRaw).includes("%") ? String(conversionRateRaw) : `${Number(conversionRateRaw).toFixed(1)}%`)
+      : "N/A",
+    growth: growthRaw != null
+      ? (String(growthRaw).startsWith("+") || String(growthRaw).startsWith("-")
+          ? String(growthRaw)
+          : `+${Number(growthRaw).toFixed(1)}%`)
+      : (timeframe === "today" ? "+0.0%" : "+0.0%"),
+    topCategories,
+    hourlySales,
+    sourceLabel: report?.title || "Live analytics data",
+  };
+};
 
 export default function ManagerSales() {
   const [salesData, setSalesData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState("today");
+  const [dataSource, setDataSource] = useState("Loading sales data");
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    // Real data fetch would go here
-    setTimeout(() => {
-      setSalesData({
-        totalRevenue: timeframe === "today" ? 4250.80 : 28400.00,
-        orders: timeframe === "today" ? 142 : 890,
-        averageOrder: timeframe === "today" ? 29.93 : 31.91,
-        conversionRate: "12.4%",
-        growth: timeframe === "today" ? "+8.2%" : "+15.4%",
-        topCategories: [
-          { name: "Beverages", value: 65, color: "bg-emerald-500" },
-          { name: "Bakery", value: 20, color: "bg-amber-500" },
-          { name: "Merchandise", value: 15, color: "bg-indigo-500" }
-        ],
-        hourlySales: [
-          { time: "08:00", sales: 450 },
-          { time: "10:00", sales: 820 },
-          { time: "12:00", sales: 1250 },
-          { time: "14:00", sales: 680 },
-          { time: "16:00", sales: 540 },
-          { time: "18:00", sales: 980 }
-        ]
+    try {
+      const [reportsRes, historicalRes] = await Promise.all([
+        analyticsApi.getSalesReports(),
+        analyticsApi.getHistoricalSales()
+      ]);
+
+      const reports = getCollection(reportsRes.data).filter((item) => item.type === "sales");
+      const historicalSets = getCollection(historicalRes.data).filter((item) => item.data_type === "sales");
+
+      const latestReport = reports[0] || null;
+      const latestHistorical = historicalSets[0] || null;
+      const historicalRows = Array.isArray(latestHistorical?.data) ? latestHistorical.data : [];
+
+      const normalized = buildSalesData({
+        report: latestReport,
+        historicalRows,
+        timeframe,
       });
+
+      setSalesData(normalized);
+      setDataSource(
+        latestReport?.title ||
+        latestHistorical?.filename ||
+        normalized.sourceLabel ||
+        "Sales analytics"
+      );
+    } catch (error) {
+      console.error("Failed to load sales analytics:", error);
+      setSalesData({
+        ...fallbackSalesData,
+        sourceLabel: "Fallback dataset",
+      });
+      setDataSource("Fallback dataset");
+    } finally {
       setLoading(false);
-    }, 600);
+    }
   }, [timeframe]);
 
   useEffect(() => {
@@ -64,7 +275,7 @@ export default function ManagerSales() {
                   <div className="flex items-center gap-3 bg-white dark:bg-white/5 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-full px-4 py-1.5 w-fit shadow-sm">
                     <DollarSign size={14} className="text-emerald-500" />
                     <p className="text-[10px] font-black text-emerald-900/60 dark:text-emerald-300 uppercase tracking-[0.3em] font-mono">
-                      FINANCIAL_LOGS // NODE: {timeframe.toUpperCase()}
+                      FINANCIAL_LOGS // NODE: {timeframe.toUpperCase()} // SOURCE: {dataSource}
                     </p>
                   </div>
                 </div>
@@ -116,7 +327,7 @@ export default function ManagerSales() {
 
                     <div className="p-8 rounded-4xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 shadow-xl">
                       <p className="text-[10px] font-black text-emerald-900/40 dark:text-emerald-400/40 uppercase tracking-widest mb-1">Avg Ticket</p>
-                      <h4 className="text-4xl font-black text-emerald-900 dark:text-emerald-50 italic tracking-tighter">${salesData.averageOrder}</h4>
+                      <h4 className="text-4xl font-black text-emerald-900 dark:text-emerald-50 italic tracking-tighter">${Number(salesData.averageOrder || 0).toFixed(2)}</h4>
                       <div className="mt-4 flex items-center gap-2 text-slate-400 font-black text-[10px] uppercase">
                         Active Optimization Required
                       </div>
@@ -140,7 +351,7 @@ export default function ManagerSales() {
                           <div key={idx} className="flex-1 flex flex-col items-center gap-4 group">
                             <div 
                               className="w-full bg-emerald-500/10 group-hover:bg-emerald-500 transition-all rounded-t-xl" 
-                              style={{ height: `${(entry.sales / 1250) * 100}%` }}
+                              style={{ height: `${(entry.sales / Math.max(...salesData.hourlySales.map((item) => item.sales), 1)) * 100}%` }}
                             />
                             <span className="text-[10px] font-black text-emerald-900/40 dark:text-emerald-400/40 uppercase font-mono">{entry.time}</span>
                           </div>

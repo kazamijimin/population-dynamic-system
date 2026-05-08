@@ -1,6 +1,7 @@
 import { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
+import { getRoleHomePath } from '../utils/roleRoutes';
 import './Auth.css';
 
 const Login = () => {
@@ -10,13 +11,13 @@ const Login = () => {
   });
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const { handleLogin, currentUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setCredentials(prev => ({
+    setCredentials((prev) => ({
       ...prev,
       [name]: value
     }));
@@ -28,120 +29,150 @@ const Login = () => {
     setIsSubmitting(true);
 
     const result = await handleLogin(credentials.username, credentials.password);
-    
+
     if (result.success) {
-      // Redirect based on user role
       const user = result.user || currentUser;
       const role = user?.role || 'staff';
-      
-      console.log('Login successful, role:', role);
-      
-      if (role === 'manager') {
-        navigate('/manager/dashboard');
-      } else if (role === 'admin') {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/staff/profile');
-      }
+      navigate(getRoleHomePath(role));
     } else {
       setErrorMsg(result.message || 'Login failed');
     }
+
     setIsSubmitting(false);
   };
 
   return (
     <div className="auth-wrapper">
-      {/* Decorative coffee beans */}
       <div className="coffee-beans">
-        <span className="bean bean-1">☕</span>
-        <span className="bean bean-2">☕</span>
-        <span className="bean bean-3">☕</span>
+        <span className="bean bean-1"></span>
+        <span className="bean bean-2"></span>
+        <span className="bean bean-3"></span>
       </div>
-      
-      <div className="auth-box">
-        {/* Coffee cup icon */}
-        <div className="auth-icon">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M6 1v3M10 1v3M14 1v3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </div>
-        
-        <div className="auth-header">
-          <h1>Population System</h1>
-          <p className="auth-subtitle">Welcome back! Please sign in to continue</p>
-        </div>
-        
-        {errorMsg && (
-          <div className="alert alert-error">
-            <span className="alert-icon">!</span>
-            {errorMsg}
-          </div>
-        )}
-        
-        <form onSubmit={handleFormSubmit} className="auth-form">
-          <div className="input-group">
-            <label htmlFor="username">Username</label>
-            <div className="input-wrapper">
-              <span className="input-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
+
+      <div className="auth-shell">
+        <section className="auth-showcase">
+          <div className="auth-showcase-top">
+            <div className="auth-brand">
+              <div className="auth-brand-mark">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 3L5 14h5l-1 7 8-12h-5l0-6z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-              </span>
-              <input
-                type="text"
-                id="username"
-                name="username"
-                value={credentials.username}
-                onChange={handleInputChange}
-                required
-                autoComplete="username"
-                placeholder="Enter username"
-              />
+              </div>
+              <div className="auth-brand-copy">
+                <small>Population Dynamics</small>
+                <strong>Neural Hub</strong>
+              </div>
             </div>
           </div>
 
-          <div className="input-group">
-            <label htmlFor="password">Password</label>
-            <div className="input-wrapper">
-              <span className="input-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-              </span>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={credentials.password}
-                onChange={handleInputChange}
-                required
-                autoComplete="current-password"
-                placeholder="Enter password"
-              />
-            </div>
+          <div className="auth-showcase-copy">
+            <h1>
+              Unified
+              <span>operations intelligence</span>
+            </h1>
+            <p>
+              Track population activity, operational trends, schedules, inventory, and simulation insights from one cohesive workspace.
+            </p>
           </div>
 
-          <button 
-            type="submit" 
-            className="btn btn-primary btn-full"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <span className="spinner"></span>
-                Signing in...
-              </>
-            ) : (
-              'Sign In'
-            )}
-          </button>
-        </form>
+          <div className="auth-showcase-bottom">
+            <div className="auth-showcase-card">
+              <div className="auth-showcase-card-label">Live visibility</div>
+              <div className="auth-showcase-card-value">24/7</div>
+              <div className="auth-showcase-card-row">
+                <span>Simulation ready</span>
+                <span>Role-based access</span>
+              </div>
+            </div>
+          </div>
+        </section>
 
-        <div className="auth-footer">
-          <p>Don&apos;t have an account? <Link to="/register">Create one</Link></p>
+        <div className="auth-box">
+          <p className="auth-panel-eyebrow">Welcome back</p>
+
+          <div className="auth-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M6 1v3M10 1v3M14 1v3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+
+          <div className="auth-header">
+            <h1>Sign in</h1>
+            <p className="auth-subtitle">Continue to your dashboard, reports, and operational tools.</p>
+          </div>
+
+          {errorMsg && (
+            <div className="alert alert-error">
+              <span className="alert-icon">!</span>
+              {errorMsg}
+            </div>
+          )}
+
+          <form onSubmit={handleFormSubmit} className="auth-form">
+            <div className="input-group">
+              <label htmlFor="username">Username</label>
+              <div className="input-wrapper">
+                <span className="input-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                </span>
+                <input
+                  type="text"
+                  id="username"
+                  name="username"
+                  value={credentials.username}
+                  onChange={handleInputChange}
+                  required
+                  autoComplete="username"
+                  placeholder="Enter username"
+                />
+              </div>
+            </div>
+
+            <div className="input-group">
+              <label htmlFor="password">Password</label>
+              <div className="input-wrapper">
+                <span className="input-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                </span>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={credentials.password}
+                  onChange={handleInputChange}
+                  required
+                  autoComplete="current-password"
+                  placeholder="Enter password"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="btn btn-primary btn-full"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="spinner"></span>
+                  Signing in...
+                </>
+              ) : (
+                'Sign In'
+              )}
+            </button>
+          </form>
+
+          <div className="auth-footer">
+            <p>Don&apos;t have an account? <Link to="/register">Create one</Link></p>
+          </div>
         </div>
       </div>
     </div>

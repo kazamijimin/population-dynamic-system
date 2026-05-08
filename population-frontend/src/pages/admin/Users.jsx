@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect, useCallback } from "react";
 import { Navigate } from "react-router-dom";
 import { adminApi } from "../../api/users.api";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../hooks/UseAuth";
 import Topbar from "../../components/layout/Topbar";
 import Sidebar from "../../components/layout/Sidebar";
 import { 
@@ -27,12 +27,6 @@ export default function Users() {
   const [activeTab, setActiveTab] = useState("users");
   const [showAddModal, setShowAddModal] = useState(false);
   const [error, setError] = useState(null);
-
-  // Hard Redirect if not Admin (Extra layer of safety)
-  if (currentUser && currentUser.role !== 'admin') {
-    return <Navigate to="/admin/dashboard" />;
-  }
-  
   const [newUser, setNewUser] = useState({
     username: "",
     email: "",
@@ -100,6 +94,11 @@ export default function Users() {
     u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Hard Redirect if not Admin (Extra layer of safety)
+  if (currentUser && currentUser.role !== 'admin') {
+    return <Navigate to="/admin/dashboard" />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 italic transition-colors duration-500">

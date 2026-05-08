@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../hooks/UseAuth";
 import Topbar from "../../components/layout/Topbar";
 import Sidebar from "../../components/layout/Sidebar";
 import { 
@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 
 export default function StaffTerminal() {
-  const { currentUser } = useAuth();
+  useAuth();
   const [orders, setOrders] = useState([
     { id: "ORD-7721", items: "2x Espresso, 1x Croissant", status: "pending", time: "10:45 AM", total: "$12.50" },
     { id: "ORD-7722", items: "1x Matcha Latte", status: "completed", time: "10:42 AM", total: "$5.50" },
@@ -27,6 +27,7 @@ export default function StaffTerminal() {
   const [isSimulating, setIsSimulating] = useState(false);
   const [simProgress, setSimProgress] = useState(0);
   const [simResult, setSimResult] = useState(null);
+  const [simSyncId, setSimSyncId] = useState("");
 
   const startSimulation = async () => {
     setIsSimulating(true);
@@ -36,6 +37,8 @@ export default function StaffTerminal() {
       setSimProgress(i);
     }
     setIsSimulating(false);
+    const syncId = `SYNC-${Date.now().toString(36).slice(-6).toUpperCase()}`;
+    setSimSyncId(syncId);
     setSimResult({
       expectedLoad: "HIGH (1.4x)",
       peakHour: "12:30 PM",
@@ -96,7 +99,7 @@ export default function StaffTerminal() {
                         <span className="px-4 py-1.5 bg-black/20 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/20">
                           {simResult.risk}
                         </span>
-                        <p className="text-[10px] font-mono opacity-60 uppercase">SYNC_ID: {Math.random().toString(36).substring(7).toUpperCase()}</p>
+                        <p className="text-[10px] font-mono opacity-60 uppercase">SYNC_ID: {simSyncId}</p>
                      </div>
                    </div>
                 </div>

@@ -16,9 +16,19 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-*sqay$=d&k704u8z9-ti)oy5sfk*x_(j0s10=^9tjaa(lneht2')
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+def env_bool(name, default=False):
+    value = os.environ.get(name, str(default))
+    return value.strip().lower() in ('1', 'true', 'yes', 'on')
+
+def env_csv(name, default=None):
+    value = os.environ.get(name)
+    if value is None:
+        return default or []
+    return [item.strip() for item in value.split(',') if item.strip()]
+
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-me')
+DEBUG = env_bool('DEBUG', False)
+ALLOWED_HOSTS = env_csv('ALLOWED_HOSTS', ['localhost', '127.0.0.1'])
 
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
@@ -79,7 +89,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'config.settings.UnsafeSessionAuthentication',
+        'config.settings.UnsafeSessionAuthentication' if DEBUG else 'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -103,15 +113,8 @@ if DATABASE_URL:
 else:
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'neondb',
-            'USER': 'neondb_owner',
-            'PASSWORD': 'npg_asTv94wQjVBg',
-            'HOST': 'ep-holy-water-a13umzty-pooler.ap-southeast-1.aws.neon.tech',
-            'PORT': '5432',
-            'OPTIONS': {
-                'sslmode': 'require',
-            },
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
 
@@ -148,7 +151,7 @@ USE_TZ = True
 
 # CORS settings
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
+_local_origins = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
     'http://localhost:5174',
@@ -163,33 +166,17 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:5178',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
-    'https://coffee-grind.mendozanicknarry.workers.dev',
 ]
+CORS_ALLOWED_ORIGINS = env_csv('CORS_ALLOWED_ORIGINS', _local_origins)
 
 # CSRF settings
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'http://localhost:5174',
-    'http://127.0.0.1:5174',
-    'http://localhost:5175',
-    'http://127.0.0.1:5175',
-    'http://localhost:5176',
-    'http://127.0.0.1:5176',
-    'http://localhost:5177',
-    'http://127.0.0.1:5177',
-    'http://localhost:5178',
-    'http://127.0.0.1:5178',
-    'http://localhost:8000',
-    'http://127.0.0.1:8000',
-    'https://coffee-grind.mendozanicknarry.workers.dev',
-]
+CSRF_TRUSTED_ORIGINS = env_csv('CSRF_TRUSTED_ORIGINS', _local_origins)
 
 # Cross-site cookie settings (required for different domains)
-SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SAMESITE = os.environ.get('SESSION_COOKIE_SAMESITE', 'Lax')
+SESSION_COOKIE_SECURE = env_bool('SESSION_COOKIE_SECURE', not DEBUG)
+CSRF_COOKIE_SAMESITE = os.environ.get('CSRF_COOKIE_SAMESITE', 'Lax')
+CSRF_COOKIE_SECURE = env_bool('CSRF_COOKIE_SECURE', not DEBUG)
 CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_HTTPONLY = False
 CSRF_COOKIE_NAME = "csrftoken"

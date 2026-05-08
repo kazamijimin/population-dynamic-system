@@ -46,25 +46,28 @@ export default function LifeEventModal({ isOpen, onClose, person, onSave }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
-        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+    <div className="ds-modal-backdrop">
+      <div className="ds-modal max-w-md">
+        <div className="ds-modal-header">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Status Update</h2>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-tight">GUEST: {person.first_name} {person.last_name}</p>
+            <p className="ds-eyebrow mb-1">Status Update</p>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Status Update</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-tight">
+              Guest: {person.first_name} {person.last_name}
+            </p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white rounded-full transition-colors border border-transparent hover:border-gray-200">
-            <XMarkIcon className="w-5 h-5 text-gray-400" />
+          <button onClick={onClose} className="ds-btn ds-btn-ghost ds-btn-icon rounded-2xl">
+            <XMarkIcon className="w-5 h-5 text-slate-400" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Update Type</label>
+        <form onSubmit={handleSubmit} className="ds-modal-body space-y-5">
+          <div className="ds-field">
+            <label className="ds-label">Update Type</label>
             <select
               value={formData.event_type}
               onChange={(e) => setFormData({ ...formData, event_type: e.target.value })}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-amber-500/20 transition-all font-medium"
+              className="ds-select"
             >
               <option value="Birth">Entry (New Customer-Born)</option>
               <option value="Death">Departure (Service End)</option>
@@ -73,25 +76,25 @@ export default function LifeEventModal({ isOpen, onClose, person, onSave }) {
             </select>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Effective Time</label>
+          <div className="ds-field">
+            <label className="ds-label">Effective Time</label>
             <input
               type="date"
               required
               value={formData.event_date}
               onChange={(e) => setFormData({ ...formData, event_date: e.target.value })}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-amber-500/20 transition-all font-medium"
+              className="ds-input"
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Observation / Notes</label>
+          <div className="ds-field">
+            <label className="ds-label">Observation / Notes</label>
             <textarea
               placeholder="Enter context or special instructions..."
               rows={3}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-amber-500/20 transition-all font-medium resize-none"
+              className="ds-textarea resize-none"
             />
           </div>
 
@@ -102,18 +105,18 @@ export default function LifeEventModal({ isOpen, onClose, person, onSave }) {
             </div>
           )}
 
-          <div className="flex gap-3 pt-2">
+          <div className="ds-modal-footer -mx-6 -mb-5 mt-6">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-3 border border-gray-200 text-gray-700 font-bold rounded-2xl hover:bg-gray-50 transition-all"
+              className="ds-btn ds-btn-secondary flex-1"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className={`flex-1 px-6 py-3 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+              className={`ds-btn ds-btn-primary flex-1 ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               {loading ? "Recording..." : "Save Event"}
             </button>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../hooks/UseAuth";
 import { updateProfile, fetchActivityHistory } from "../../api/users.api";
 import Topbar from "../../components/layout/Topbar";
 import Sidebar from "../../components/layout/Sidebar";

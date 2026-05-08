@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { simulationApi } from "../../api/simulation.api";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../hooks/UseAuth";
 import Topbar from "../../components/layout/Topbar";
 import Sidebar from "../../components/layout/Sidebar";
 import { Settings, Users, ArrowRight, Save, Trash2, Plus, AlertCircle, Info, Calendar, Zap, Sun, Umbrella, Brain, Cpu, Shield } from "lucide-react";

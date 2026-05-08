@@ -1,30 +1,126 @@
 import { Link, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { useAuth } from "../../hooks/useAuth";
-import { Menu, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "../../hooks/UseAuth";
+import {
+  Activity,
+  Bot,
+  Boxes,
+  CalendarDays,
+  ChevronRight,
+  ClipboardList,
+  LayoutDashboard,
+  Menu,
+  PanelLeftClose,
+  ShieldCheck,
+  Sparkles,
+  UserCircle2,
+  Users,
+  Waves,
+  X,
+} from "lucide-react";
+
+const roleTheme = {
+  admin: {
+    accentText: "text-violet-500",
+    accentTextStrong: "text-violet-700 dark:text-violet-300",
+    accentSoft: "bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-300",
+    accentGradient: "from-violet-600 to-fuchsia-500",
+    activeGradient: "from-violet-600 to-fuchsia-500",
+    hoverBg: "hover:bg-violet-50 dark:hover:bg-white/6",
+    hoverText: "hover:text-violet-700",
+    cardBorder: "border-violet-200/80 dark:border-violet-400/10",
+  },
+  manager: {
+    accentText: "text-emerald-500",
+    accentTextStrong: "text-emerald-700 dark:text-emerald-300",
+    accentSoft: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300",
+    accentGradient: "from-emerald-600 to-teal-500",
+    activeGradient: "from-emerald-600 to-teal-500",
+    hoverBg: "hover:bg-emerald-50 dark:hover:bg-white/6",
+    hoverText: "hover:text-emerald-700",
+    cardBorder: "border-emerald-200/80 dark:border-emerald-400/10",
+  },
+  staff: {
+    accentText: "text-amber-500",
+    accentTextStrong: "text-amber-700 dark:text-amber-300",
+    accentSoft: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300",
+    accentGradient: "from-amber-500 to-orange-500",
+    activeGradient: "from-amber-500 to-orange-500",
+    hoverBg: "hover:bg-amber-50 dark:hover:bg-white/6",
+    hoverText: "hover:text-amber-700",
+    cardBorder: "border-amber-200/80 dark:border-amber-400/10",
+  },
+};
+
+const navConfig = {
+  admin: [
+    { label: "Overview", path: "/admin/dashboard", icon: LayoutDashboard },
+    { label: "Inventory", path: "/admin/inventory", icon: Boxes },
+    { label: "Customers", path: "/admin/customers", icon: Users },
+    { label: "Reports", path: "/admin/reports", icon: ClipboardList },
+    { label: "Schedules", path: "/admin/schedules", icon: CalendarDays },
+    { label: "Simulation", path: "/admin/simulation", icon: Sparkles },
+    { label: "Monitoring", path: "/admin/activity", icon: Activity },
+    { label: "Access", path: "/admin/users", icon: ShieldCheck },
+  ],
+  manager: [
+    { label: "Overview", path: "/manager/dashboard", icon: LayoutDashboard },
+    { label: "Customer Flow", path: "/manager/flow", icon: Waves },
+    { label: "Sales", path: "/manager/sales", icon: Activity },
+    { label: "Inventory", path: "/manager/inventory", icon: Boxes },
+    { label: "Node Control", path: "/manager/simulation", icon: Sparkles },
+    { label: "Reports", path: "/manager/reports", icon: ClipboardList },
+    { label: "Profile", path: "/manager/profile", icon: UserCircle2 },
+  ],
+  staff: [
+    { label: "Terminal", path: "/staff/terminal", icon: LayoutDashboard },
+    { label: "Profile", path: "/staff/profile", icon: UserCircle2 },
+  ],
+};
+
+const defaultSuggestions = {
+  admin: [
+    "Review demand spikes before the next simulation run.",
+    "Two monitoring logs need triage in the access console.",
+  ],
+  manager: [
+    "Low-stock materials are trending toward depletion this afternoon.",
+    "Customer flow suggests preparing an extra peak-hour staffing block.",
+  ],
+  staff: [
+    "Queue pressure is rising. Prep the most requested items first.",
+    "One profile update is still pending confirmation.",
+  ],
+};
 
 export default function Sidebar() {
   const { currentUser } = useAuth();
+  const location = useLocation();
   const [time, setTime] = useState(new Date());
   const [isOpen, setIsOpen] = useState(false);
   const [liveSuggestions, setLiveSuggestions] = useState([]);
-  const location = useLocation();
+
+  const role = currentUser?.role || "staff";
+  const navItems = navConfig[role] || navConfig.staff;
+  const dashboardPath = navItems[0]?.path || "/login";
+  const theme = roleTheme[role] || roleTheme.admin;
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Real-time SSE Connection
   useEffect(() => {
-    if (!currentUser?.role) return;
+    if (!currentUser?.role) return undefined;
 
-    // Connect to the Django SSE stream
-    const eventSource = new EventSource(`http://localhost:8000/api/common/stream-suggestions/?role=${currentUser.role}`);
+    const eventSource = new EventSource(
+      `http://localhost:8000/api/common/stream-suggestions/?role=${currentUser.role}`
+    );
 
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      setLiveSuggestions(data.suggestions);
+      const suggestions = Array.isArray(data?.suggestions) ? data.suggestions : [];
+      setLiveSuggestions(suggestions);
     };
 
     eventSource.onerror = () => {
@@ -34,144 +130,158 @@ export default function Sidebar() {
     return () => eventSource.close();
   }, [currentUser?.role]);
 
-  // Close sidebar on route change (mobile)
   useEffect(() => {
     setIsOpen(false);
-  }, [location]);
+  }, [location.pathname]);
 
-  const isAdmin = currentUser?.role === 'admin';
-  const isManager = currentUser?.role === 'manager';
-
-  const navItems = [
-    // Admin Routes
-    { label: "Dashboard", path: "/admin/dashboard", icon: "📊", roles: ["admin"] },
-    { label: "Inventory", path: "/admin/inventory", icon: "📦", roles: ["admin"] },
-    { label: "Customers", path: "/admin/customers", icon: "👥", roles: ["admin"] },
-    { label: "Reports", path: "/admin/reports", icon: "📈", roles: ["admin"] },
-    { label: "Schedule", path: "/admin/schedules", icon: "📅", roles: ["admin"] },
-    { label: "Simulation", path: "/admin/simulation", icon: "🧪", roles: ["admin"] },
-    { label: "Monitoring", path: "/admin/activity", icon: "📡", roles: ["admin"] },
-    { label: "Access", path: "/admin/users", icon: "🔐", roles: ["admin"] },
-    
-    // Manager Routes
-    { label: "Dashboard", path: "/manager/dashboard", icon: "📊", roles: ["manager"] },
-    { label: "Customer Flow", path: "/manager/flow", icon: "🌊", roles: ["manager"] },
-    { label: "Sales", path: "/manager/sales", icon: "💰", roles: ["manager"] },
-    { label: "Inventory", path: "/manager/inventory", icon: "📦", roles: ["manager"] },
-    { label: "Node Control", path: "/manager/simulation", icon: "🖥️", roles: ["manager"] },
-    { label: "Reports", path: "/manager/reports", icon: "📈", roles: ["manager"] },
-    { label: "Profile", path: "/manager/profile", icon: "👤", roles: ["manager"] },
-
-    // Staff Routes
-    { label: "Terminal", path: "/staff/terminal", icon: "☕", roles: ["staff"] },
-    { label: "ID Profile", path: "/staff/profile", icon: "👤", roles: ["staff"] },
-  ];
-
-  const isStaff = currentUser?.role === 'staff';
-  const themeColor = isManager ? "emerald" : (isStaff ? "amber" : "violet");
-  const activeClass = isManager 
-    ? "bg-emerald-600 dark:bg-emerald-600/10 text-white dark:text-emerald-400 border-emerald-500/20 shadow-emerald-500/5 shadow-lg" 
-    : isStaff
-      ? "bg-amber-600 dark:bg-amber-600/10 text-white dark:text-amber-400 border-amber-500/20 shadow-amber-500/5 shadow-lg"
-      : "bg-violet-600 dark:bg-violet-600/10 text-white dark:text-violet-400 border-violet-500/20 shadow-violet-500/5 shadow-lg";
-  const hoverClass = isManager 
-    ? "hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400" 
-    : isStaff
-      ? "hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400"
-      : "hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-violet-400";
-  const textClass = isManager 
-    ? "text-emerald-900/40 dark:text-emerald-400/40" 
-    : isStaff
-      ? "text-amber-900/40 dark:text-amber-400/40"
-      : "text-violet-900/40 dark:text-violet-400/40";
+  const suggestions = useMemo(() => {
+    if (liveSuggestions.length > 0) {
+      return liveSuggestions
+        .map((item) => (typeof item === "string" ? item : item?.title || item?.desc))
+        .filter(Boolean)
+        .slice(0, 2);
+    }
+    return defaultSuggestions[role] || defaultSuggestions.staff;
+  }, [liveSuggestions, role]);
 
   return (
     <>
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className={`lg:hidden fixed bottom-6 right-6 z-100 w-14 h-14 ${isManager ? 'bg-emerald-600 shadow-emerald-500/40' : (isStaff ? 'bg-amber-600 shadow-amber-500/40' : 'bg-violet-600 shadow-violet-500/40')} text-white rounded-full shadow-2xl flex items-center justify-center active:scale-95 transition-all border-4 border-white dark:border-slate-800`}
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className={`lg:hidden fixed bottom-5 right-5 z-[80] w-14 h-14 rounded-2xl bg-gradient-to-br ${theme.accentGradient} text-white shadow-[0_18px_40px_-18px_rgba(124,58,237,0.75)] flex items-center justify-center border border-white/60`}
+        aria-label={isOpen ? "Close navigation" : "Open navigation"}
       >
-        {isOpen ? <X size={24} /> : <Menu size={24} />}
+        {isOpen ? <X size={22} /> : <Menu size={22} />}
       </button>
 
-      <aside className={`fixed lg:sticky top-0 left-0 z-50 flex flex-col w-64 h-screen ${isManager ? 'bg-emerald-50/80 dark:bg-emerald-950/20' : isStaff ? 'bg-amber-50/80 dark:bg-amber-950/20' : 'bg-white/80 dark:bg-slate-900/50'} backdrop-blur-xl border-r ${isManager ? 'border-emerald-500/10' : isStaff ? 'border-amber-500/10' : 'border-slate-200 dark:border-white/5'} p-6 shadow-2xl transition-all duration-300 shrink-0 ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="flex items-center gap-3 mb-10">
-          <div className={`w-10 h-10 ${isManager ? 'bg-emerald-600 shadow-emerald-500/20' : isStaff ? 'bg-amber-600 shadow-amber-500/20' : 'bg-violet-600 shadow-violet-500/20'} rounded-xl flex items-center justify-center shadow-lg`}>
-            <span className="text-xl text-white">{isManager ? "🌿" : (isStaff ? "☕" : "⚡")}</span>
+      <aside
+        className={`fixed lg:sticky top-0 left-0 z-[70] h-screen w-[290px] shrink-0 border-r border-slate-200/80 dark:border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,255,0.94))] dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(9,13,24,0.95))] backdrop-blur-2xl shadow-[0_24px_60px_-40px_rgba(124,58,237,0.28)] px-5 py-5 flex flex-col transition-transform duration-300 ${
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
+      >
+        <div className="flex items-center justify-between gap-3 px-2 pb-5 border-b border-slate-200/70 dark:border-white/8">
+          <Link to={dashboardPath} className="flex items-center gap-3 min-w-0">
+            <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${theme.accentGradient} text-white flex items-center justify-center shadow-[0_18px_30px_-18px_rgba(124,58,237,0.7)]`}>
+              <Sparkles size={22} />
+            </div>
+            <div className="min-w-0">
+              <p className={`text-[11px] uppercase tracking-[0.28em] font-semibold ${theme.accentText}`}>
+                Population
+              </p>
+              <h2 className="text-xl font-extrabold tracking-tight text-slate-950 dark:text-white">
+                Neural Hub
+              </h2>
+            </div>
+          </Link>
+
+          <div className="hidden lg:flex w-10 h-10 rounded-xl items-center justify-center text-slate-400 bg-white/80 dark:bg-white/5 border border-slate-200/70 dark:border-white/8">
+            <PanelLeftClose size={16} />
           </div>
-          <h2 className={`text-xl font-black ${isManager ? 'text-emerald-950 dark:text-emerald-50' : isStaff ? 'text-amber-950 dark:text-amber-50' : 'text-slate-900 dark:text-white'} tracking-tighter uppercase italic`}>
-            Supply<span className={isManager ? "text-emerald-500" : (isStaff ? "text-amber-500" : "text-violet-500")}>Hub</span>
-          </h2>
         </div>
 
-        <nav className="flex flex-col gap-2 overflow-y-auto">
-          {navItems.filter(item => item.roles.includes(currentUser?.role)).map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest cursor-pointer group ${
-                  isActive
-                    ? `${activeClass} border`
-                    : `${textClass} ${hoverClass}`
-                }`}
-              >
-                <span className={`text-base leading-none ${!isActive && "opacity-50 group-hover:opacity-100 transition-opacity"}`}>
-                  {item.icon}
-                </span>
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+        <div className="mt-6 space-y-2">
+          <div className="px-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
+              Workspace
+            </p>
+          </div>
+          <nav className="space-y-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
 
-        <div className={`mt-auto space-y-6 pt-6 border-t ${isManager ? 'border-emerald-500/10' : isStaff ? 'border-amber-500/10' : 'border-slate-200 dark:border-white/5'}`}>
-          {/* AI Recommendations Section */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between mb-4">
-              <p className={`text-[9px] font-black uppercase tracking-[0.2em] ${isManager ? 'text-emerald-500/40' : isStaff ? 'text-amber-500/40' : 'text-violet-500/40'}`}>Nexus_AI Suggestions</p>
-              <div className="flex gap-1">
-                <div className={`w-1 h-1 rounded-full animate-ping ${isManager ? 'bg-emerald-500' : isStaff ? 'bg-amber-500' : 'bg-violet-500'}`}></div>
-                <span className="text-[7px] font-bold opacity-30 uppercase">Live</span>
-              </div>
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`group flex items-center gap-3 rounded-2xl px-3.5 py-3 transition-all ${
+                    isActive
+                      ? `bg-gradient-to-r ${theme.activeGradient} text-white shadow-[0_18px_32px_-20px_rgba(124,58,237,0.72)]`
+                      : `text-slate-600 ${theme.hoverText} ${theme.hoverBg} dark:text-slate-300 dark:hover:text-white`
+                  }`}
+                >
+                  <span
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      isActive
+                        ? "bg-white/18 text-white"
+                        : `${theme.accentSoft} dark:bg-white/6`
+                    }`}
+                  >
+                    <Icon size={18} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold tracking-tight">{item.label}</p>
+                  </div>
+                  <ChevronRight
+                    size={16}
+                    className={`transition-transform ${isActive ? "opacity-100" : "opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0"}`}
+                  />
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
+        <div className={`mt-6 rounded-[28px] border ${theme.cardBorder} bg-[radial-gradient(circle_at_top_left,rgba(167,139,250,0.22),transparent_42%),linear-gradient(145deg,rgba(255,255,255,0.96),rgba(245,243,255,0.92))] dark:bg-[radial-gradient(circle_at_top_left,rgba(167,139,250,0.18),transparent_42%),linear-gradient(145deg,rgba(28,20,50,0.82),rgba(15,23,42,0.82))] p-5 shadow-[0_18px_36px_-28px_rgba(124,58,237,0.45)]`}>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className={`text-[11px] uppercase tracking-[0.22em] font-semibold ${theme.accentText}`}>
+                Nexus AI
+              </p>
+              <h3 className="text-base font-bold text-slate-950 dark:text-white">
+                Live Suggestions
+              </h3>
             </div>
-            
-            {(liveSuggestions.length > 0 ? liveSuggestions : (isAdmin ? [
-              { title: "Scale Node_02", desc: "Projected 20% surge in sector B. Recommend increasing compute share.", color: "violet" },
-              { title: "Audit Required", desc: "Divergence detected in historical sales vs inventory depletion.", color: "fuchsia" }
-            ] : isManager ? [
-              { title: "Restock Event", desc: "Coffee Beans at 12%. Automated supply chain request pending.", color: "emerald" },
-              { title: "Peak Flow: 14:00", desc: "Staffing levels optimal for upcoming traffic wave.", color: "teal" }
-            ] : isStaff ? [
-              { title: "Expedite Wave", desc: "Queue growing. Recommend activating secondary brew node.", color: "amber" },
-              { title: "Prep Priority", desc: "Low on \"Iced Latte\" bases. Batch prep suggested now.", color: "orange" }
-            ] : [])).map((sug, idx) => (
-              <div key={idx} className={`p-4 bg-${sug.color || (isManager ? 'emerald' : isStaff ? 'amber' : 'violet')}-500/5 rounded-2xl border border-${sug.color || (isManager ? 'emerald' : isStaff ? 'amber' : 'violet')}-500/10 group cursor-help hover:bg-${sug.color || (isManager ? 'emerald' : isStaff ? 'amber' : 'violet')}-500/10 transition-all animate-in fade-in slide-in-from-bottom-2 duration-500`}>
-                <p className={`text-[10px] font-black text-${sug.color || (isManager ? 'emerald' : isStaff ? 'amber' : 'violet')}-600 dark:text-${sug.color || (isManager ? 'emerald' : isStaff ? 'amber' : 'violet')}-400 uppercase italic mb-1`}>{sug.title}</p>
-                <p className="text-[9px] text-slate-500 dark:text-slate-400 font-medium leading-tight">{sug.desc}</p>
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[11px] font-semibold">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Live
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {suggestions.map((item, index) => (
+              <div
+                key={`${item}-${index}`}
+                className="rounded-2xl bg-white/88 dark:bg-white/6 border border-white/70 dark:border-white/8 px-4 py-3 text-sm text-slate-600 dark:text-slate-300 shadow-[0_12px_24px_-24px_rgba(124,58,237,0.45)]"
+              >
+                {item}
               </div>
             ))}
           </div>
 
-          <div>
-            <p className={`text-[10px] font-black ${isManager ? 'text-emerald-600/40 dark:text-emerald-400/40' : isStaff ? 'text-amber-600/40 dark:text-amber-400/40' : 'text-slate-400 dark:text-slate-600'} uppercase tracking-widest mb-1`}>
-              System Entropy
-            </p>
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 ${isManager ? 'bg-emerald-500 shadow-emerald-500/50' : isStaff ? 'bg-amber-500 shadow-amber-500/50' : 'bg-violet-500 shadow-violet-500/50'} rounded-full animate-pulse shadow-glow`}></div>
-              <p className={`text-xs font-mono font-bold ${isManager ? 'text-emerald-700/60 dark:text-emerald-400/60' : isStaff ? 'text-amber-700/60 dark:text-amber-400/60' : 'text-slate-500 dark:text-slate-400'}`}>
-                {time.toLocaleTimeString()}
-              </p>
+          <Link
+            to={dashboardPath}
+            className={`mt-4 inline-flex items-center gap-2 text-sm font-semibold ${theme.accentTextStrong}`}
+          >
+            Open dashboard
+            <ChevronRight size={16} />
+          </Link>
+        </div>
+
+        <div className="mt-auto space-y-4 pt-6">
+          <div className="rounded-3xl border border-slate-200/80 dark:border-white/8 bg-white/85 dark:bg-white/5 px-4 py-4">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-2xl ${theme.accentSoft} flex items-center justify-center`}>
+                <Bot size={18} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                  System Sync
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </aside>
 
       {isOpen && (
-        <div 
+        <div
           onClick={() => setIsOpen(false)}
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 z-[60] bg-slate-950/35 backdrop-blur-sm lg:hidden"
         />
       )}
     </>

@@ -44,33 +44,61 @@ export default function HouseholdModal({ isOpen, onClose, household, zones, onSa
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
-        <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/30">
-          <h2 className="text-2xl font-bold text-gray-800 tracking-tight">{household ? "Manage Dining Area" : "New Dining Area"}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">✕</button>
+    <div className="ds-modal-backdrop">
+      <div className="ds-modal max-w-lg">
+        <div className="ds-modal-header">
+          <div>
+            <p className="ds-eyebrow mb-1">Area Management</p>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+              {household ? "Manage Dining Area" : "New Dining Area"}
+            </h2>
+          </div>
+          <button onClick={onClose} className="ds-btn ds-btn-ghost ds-btn-icon rounded-2xl" aria-label="Close">
+            ×
+          </button>
         </div>
-        
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Table / Space Number</label>
-            <input required type="text" value={formData.house_number} onChange={e => setFormData({...formData, house_number: e.target.value})} className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all shadow-sm" placeholder="e.g. Table 01" />
+
+        <form onSubmit={handleSubmit} className="ds-modal-body space-y-5">
+          <div className="ds-field">
+            <label className="ds-label">Table / Space Number</label>
+            <input
+              required
+              type="text"
+              value={formData.house_number}
+              onChange={(e) => setFormData({ ...formData, house_number: e.target.value })}
+              className="ds-input"
+              placeholder="e.g. Table 01"
+            />
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Section / Floor</label>
-            <input required type="text" value={formData.street} onChange={e => setFormData({...formData, street: e.target.value})} className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all shadow-sm" placeholder="e.g. Mezzanine" />
+
+          <div className="ds-field">
+            <label className="ds-label">Section / Floor</label>
+            <input
+              required
+              type="text"
+              value={formData.street}
+              onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+              className="ds-input"
+              placeholder="e.g. Mezzanine"
+            />
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Shop Zone</label>
-            <select required value={formData.zone} onChange={e => setFormData({...formData, zone: e.target.value})} className="w-full px-4 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 transition-all shadow-sm">
+
+          <div className="ds-field">
+            <label className="ds-label">Shop Zone</label>
+            <select
+              required
+              value={formData.zone}
+              onChange={(e) => setFormData({ ...formData, zone: e.target.value })}
+              className="ds-select"
+            >
               <option value="">Select Cafe Zone</option>
-              {zones.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
+              {zones.map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}
             </select>
           </div>
 
-          <div className="flex justify-end gap-3 mt-8">
-            <button type="button" onClick={onClose} className="px-6 py-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition font-bold text-sm uppercase">Cancel</button>
-            <button type="submit" className="px-8 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition shadow-lg shadow-emerald-100 font-bold text-sm uppercase">
+          <div className="ds-modal-footer -mx-6 -mb-5 mt-6">
+            <button type="button" onClick={onClose} className="ds-btn ds-btn-secondary">Cancel</button>
+            <button type="submit" className="ds-btn ds-btn-primary">
               {household ? "Update Area" : "Create Area"}
             </button>
           </div>
