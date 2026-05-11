@@ -1,9 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
-  "installCommand": "npm install --prefix population-frontend",
-  "buildCommand": "npm run build --prefix population-frontend",
-  "outputDirectory": "population-frontend/dist",
+  "outputDirectory": "dist",
   "rewrites": [
     {
       "source": "/(.*)",
