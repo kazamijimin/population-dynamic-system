@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../hooks/UseAuth";
+import { buildApiUrl } from "../../api/axios";
 import {
   Activity,
   Bot,
@@ -113,8 +114,9 @@ export default function Sidebar() {
   useEffect(() => {
     if (!currentUser?.role) return undefined;
 
+    const query = new URLSearchParams({ role: currentUser.role });
     const eventSource = new EventSource(
-      `http://localhost:8000/api/common/stream-suggestions/?role=${currentUser.role}`
+      buildApiUrl(`/common/stream-suggestions/?${query.toString()}`)
     );
 
     eventSource.onmessage = (event) => {
