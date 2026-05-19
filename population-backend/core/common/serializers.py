@@ -37,7 +37,9 @@ class HouseholdSerializer(serializers.ModelSerializer):
         model = Household
         fields = [
             'id', 'location_id', 'zone', 'zone_name',
-            'capacity', 'member_count', 'members', 'created_at'
+            'area_type', 'section_label', 'status', 'capacity',
+            'is_active', 'is_reservable', 'priority', 'notes',
+            'member_count', 'members', 'created_at'
         ]
 class SimulationSettingsSerializer(serializers.ModelSerializer):
     class Meta:

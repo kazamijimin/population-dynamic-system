@@ -25,10 +25,12 @@ const Inventory = () => {
   });
 
   const categoryColors = {
-    'COFFEE': 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-    'NON_COFFEE': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-    'PASTRY': 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-    'MEAL': 'bg-rose-500/20 text-rose-400 border-rose-500/30',
+    hot_drinks: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+    cold_drinks: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+    pastries: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+    desserts: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
+    add_ons: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+    other: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
   };
 
   const fetchData = useCallback(async () => {
@@ -41,7 +43,7 @@ const Inventory = () => {
         setItems(data);
       }
       const history = await analyticsApi.getHistoricalData();
-      setHistoricalData(history);
+      setHistoricalData(Array.isArray(history.data) ? history.data : (history.data?.results || []));
     } catch {
       setError('System communication failure. Inventory registry unreachable.');
     }
@@ -435,7 +437,7 @@ const Inventory = () => {
 };
 
 // ============ DESIGN HELPER COMPONENTS ============
-function FormInput({ label, type = "text", value, ...props }) {
+function FormInput({ label, type = "text", value, onChange, ...props }) {
   return (
     <div className="space-y-2 w-full">
       <label className="block text-[10px] font-black text-slate-400 dark:text-violet-400 uppercase tracking-widest leading-none pl-1">{label}</label>
@@ -443,6 +445,7 @@ function FormInput({ label, type = "text", value, ...props }) {
         type={type}
         value={value}
         className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-violet-500 font-bold text-slate-900 dark:text-slate-100 transition-all shadow-sm"
+        onChange={(e) => onChange && onChange(e.target.value)}
         {...props}
       />
     </div>

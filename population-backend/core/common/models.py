@@ -18,10 +18,31 @@ class Zone(models.Model):
 
 class Household(models.Model):
     """Specific Dining Tables or Storage Locations within a Zone"""
+    AREA_TYPES = [
+        ('table', 'Dining Table'),
+        ('bar', 'Bar Counter'),
+        ('booth', 'Booth'),
+        ('pickup', 'Pickup Area'),
+        ('storage', 'Storage Area'),
+    ]
+
+    AREA_STATUS = [
+        ('available', 'Available'),
+        ('occupied', 'Occupied'),
+        ('reserved', 'Reserved'),
+        ('maintenance', 'Maintenance'),
+    ]
+
     location_id = models.CharField(max_length=50, unique=True, help_text="Table number or Shelf ID", default="T00")
     zone = models.ForeignKey(Zone, on_delete=models.SET_NULL, null=True, blank=True, related_name='households')
+    area_type = models.CharField(max_length=20, choices=AREA_TYPES, default='table')
+    section_label = models.CharField(max_length=100, blank=True, default='')
+    status = models.CharField(max_length=20, choices=AREA_STATUS, default='available')
     is_active = models.BooleanField(default=True)
+    is_reservable = models.BooleanField(default=True)
+    priority = models.IntegerField(default=1)
     capacity = models.IntegerField(default=4, help_text="Number of seats if it's a table")
+    notes = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -121,6 +142,7 @@ class OperationalSchedule(models.Model):
         ('Pending', 'Pending'),
         ('In Progress', 'In Progress'),
         ('Completed', 'Completed'),
+        ('Aborted', 'Aborted'),
         ('Cancelled', 'Cancelled'),
     ]
 

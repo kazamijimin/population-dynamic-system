@@ -8,11 +8,34 @@ from .serializers import (
     IngredientSerializer
 )
 
+DEFAULT_INGREDIENTS = [
+    {'name': 'Coffee Beans', 'description': 'House espresso and brewed coffee base.', 'quantity': 25, 'unit': 'kg', 'min_stock_level': 8, 'cost_per_unit': 420},
+    {'name': 'Whole Milk', 'description': 'Primary milk stock for hot and iced drinks.', 'quantity': 40, 'unit': 'l', 'min_stock_level': 12, 'cost_per_unit': 82},
+    {'name': 'Sugar Syrup', 'description': 'Sweetener used for flavored beverages.', 'quantity': 15, 'unit': 'l', 'min_stock_level': 5, 'cost_per_unit': 95},
+    {'name': 'Disposable Cups', 'description': 'Takeaway cup inventory.', 'quantity': 600, 'unit': 'pcs', 'min_stock_level': 180, 'cost_per_unit': 4},
+]
+
+DEFAULT_ITEMS = [
+    {'name': 'Hot Americano', 'description': 'Espresso with hot water.', 'category': 'hot_drinks', 'price': 95},
+    {'name': 'Iced Latte', 'description': 'Espresso, milk, and ice.', 'category': 'cold_drinks', 'price': 135},
+    {'name': 'Butter Croissant', 'description': 'Daily pastry item.', 'category': 'pastries', 'price': 110},
+]
+
+
+def ensure_inventory_defaults():
+    if not Ingredient.objects.exists():
+        Ingredient.objects.bulk_create(Ingredient(**data) for data in DEFAULT_INGREDIENTS)
+
+    if not Item.objects.exists():
+        Item.objects.bulk_create(Item(**data) for data in DEFAULT_ITEMS)
+
+
 @api_view(['GET', 'POST'])
 @permission_classes([permissions.IsAuthenticated])
 def ingredient_list_create(request):
     """List all ingredients or create a new ingredient"""
     if request.method == 'GET':
+        ensure_inventory_defaults()
         ingredients = Ingredient.objects.all()
         serializer = IngredientSerializer(ingredients, many=True)
         return Response(serializer.data)
@@ -57,6 +80,7 @@ def ingredient_detail(request, pk):
 def item_list_create(request):
     """List all items or create a new item"""
     if request.method == 'GET':
+        ensure_inventory_defaults()
         items = Item.objects.all()
         serializer = ItemSerializer(items, many=True)
         return Response(serializer.data)

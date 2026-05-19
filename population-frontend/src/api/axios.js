@@ -12,4 +12,38 @@ const api = axios.create({
   xsrfHeaderName: 'X-CSRFToken',
 });
 
+const unsafeMethods = new Set(['post', 'put', 'patch', 'delete']);
+let csrfPromise = null;
+
+const getCookie = (name) => {
+  if (typeof document === 'undefined') return null;
+  const cookie = document.cookie
+    .split('; ')
+    .find((row) => row.startsWith(`${name}=`));
+  return cookie ? decodeURIComponent(cookie.split('=').slice(1).join('=')) : null;
+};
+
+const ensureCsrfCookie = async () => {
+  if (getCookie('csrftoken')) return;
+  if (!csrfPromise) {
+    csrfPromise = api.get('/csrf/').finally(() => {
+      csrfPromise = null;
+    });
+  }
+  await csrfPromise;
+};
+
+api.interceptors.request.use(async (config) => {
+  const method = (config.method || 'get').toLowerCase();
+  if (unsafeMethods.has(method)) {
+    await ensureCsrfCookie();
+    const token = getCookie('csrftoken');
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers['X-CSRFToken'] = token;
+    }
+  }
+  return config;
+});
+
 export default api;

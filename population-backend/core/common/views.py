@@ -12,11 +12,57 @@ from .serializers import (
     ZoneSerializer, ShopEventSerializer, SimulationSettingsSerializer, OperationalScheduleSerializer
 )
 
+DEFAULT_ZONES = [
+    ('counter', 'Main counter and queue area'),
+    ('seating', 'Indoor customer dining tables'),
+    ('pickup', 'Order pickup and handoff area'),
+    ('kitchen', 'Back-of-house preparation area'),
+]
+
+DEFAULT_TABLES = [
+    ('T01', 'seating', 4, 'table', 'Main Floor'),
+    ('T02', 'seating', 4, 'table', 'Main Floor'),
+    ('T03', 'seating', 2, 'table', 'Window Side'),
+    ('T04', 'seating', 6, 'booth', 'Family Area'),
+    ('BAR01', 'counter', 3, 'bar', 'Counter'),
+    ('PICKUP', 'pickup', 1, 'pickup', 'Pickup Shelf'),
+]
+
+
+def ensure_shop_layout_defaults():
+    zone_lookup = {}
+    for name, description in DEFAULT_ZONES:
+        zone, _ = Zone.objects.get_or_create(
+            name=name,
+            defaults={'description': description},
+        )
+        zone_lookup[name] = zone
+
+    if not Household.objects.exists():
+        Household.objects.bulk_create(
+            Household(
+                location_id=location_id,
+                zone=zone_lookup[zone_name],
+                capacity=capacity,
+                area_type=area_type,
+                section_label=section_label,
+            )
+            for location_id, zone_name, capacity, area_type, section_label in DEFAULT_TABLES
+        )
+    elif Household.objects.filter(zone__isnull=True).exists():
+        default_zone = zone_lookup['seating']
+        Household.objects.filter(zone__isnull=True).update(zone=default_zone)
+
+
 class ZoneViewSet(viewsets.ModelViewSet):
     """ViewSet for Physical Shop Zones (Counter, Seating, etc.)"""
     queryset = Zone.objects.all()
     serializer_class = ZoneSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        ensure_shop_layout_defaults()
+        return Zone.objects.all()
 
 class ShopEventViewSet(viewsets.ModelViewSet):
     """ViewSet for Customer Flow Events (Arrival, Order, Departure)"""
@@ -29,6 +75,10 @@ class HouseholdViewSet(viewsets.ModelViewSet):
     queryset = Household.objects.all()
     serializer_class = HouseholdSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        ensure_shop_layout_defaults()
+        return Household.objects.all()
 
 class PopulationRecordViewSet(viewsets.ModelViewSet):
     """ViewSet for PopulationRecord CRUD operations"""
@@ -55,6 +105,11 @@ class SimulationSettingsViewSet(viewsets.ModelViewSet):
     queryset = SimulationSettings.objects.all()
     serializer_class = SimulationSettingsSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        if not SimulationSettings.objects.exists():
+            SimulationSettings.objects.create(is_active=True)
+        return SimulationSettings.objects.all()
 
 class OperationalScheduleViewSet(viewsets.ModelViewSet):
     """ViewSet for Daily Shop Operations"""

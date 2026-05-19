@@ -79,6 +79,16 @@ const toSchedulePayload = (formData) => ({
   priority: Number(formData.priority) || 1,
 });
 
+const getApiErrorMessage = (err, fallback) => {
+  const data = err?.response?.data;
+  if (!data) return fallback;
+  if (typeof data === "string") return data;
+  if (data.detail) return data.detail;
+  return Object.entries(data)
+    .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(", ") : messages}`)
+    .join("\n") || fallback;
+};
+
 const getFormDataFromItem = (item) => {
   const parsed = parseScheduleDetails(item.scheduled_time);
 
@@ -145,7 +155,7 @@ export default function Schedules() {
   }, [enrichedSchedules]);
 
   const selectedDaySchedules = schedulesByDate[selectedDate] || [];
-  const unscheduledItems = enrichedSchedules.filter((item) => !item.parsedDateKey);
+  const unscheduledItems = enrichedSchedules.filter((item) => !item.parsedDateKey && item.status !== "Completed");
 
   const monthLabel = calendarMonth.toLocaleDateString([], {
     month: "long",
@@ -217,7 +227,7 @@ export default function Schedules() {
       closeModal();
       fetchSchedules();
     } catch (err) {
-      alert("Save failed");
+      alert(getApiErrorMessage(err, "Save failed"));
     }
   };
 
@@ -233,7 +243,7 @@ export default function Schedules() {
       await commonApi.updateSchedule(item.id, { status: newStatus });
       fetchSchedules();
     } catch (err) {
-      alert("Status update failed");
+      alert(getApiErrorMessage(err, "Status update failed"));
     }
   };
 
@@ -243,7 +253,7 @@ export default function Schedules() {
         await commonApi.updateSchedule(id, { status: "Aborted" });
         fetchSchedules();
       } catch (err) {
-        alert("Abort signal rejected");
+        alert(getApiErrorMessage(err, "Abort signal rejected"));
       }
     }
   };
@@ -260,10 +270,10 @@ export default function Schedules() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-linear-to-br dark:from-indigo-950 dark:via-slate-900 dark:to-black transition-colors duration-500 italic">
-      <div className="flex w-full h-screen relative">
+    <div className="h-screen overflow-hidden bg-slate-50 dark:bg-linear-to-br dark:from-indigo-950 dark:via-slate-900 dark:to-black transition-colors duration-500 italic">
+      <div className="flex w-full h-full relative">
         <Sidebar />
-        <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        <div className="flex-1 flex flex-col h-full overflow-hidden">
           <Topbar />
           <main className="flex-1 overflow-y-auto p-4 md:p-8 w-full">
             <div className="max-w-7xl mx-auto pt-6">
@@ -455,13 +465,43 @@ export default function Schedules() {
                             </span>
                           </div>
 
-                          <div className="mt-5 flex flex-wrap items-center gap-3">
-                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                              <ServerIcon className="w-4 h-4 text-violet-500" />
-                              {item.node_id}
+                          <div className="mt-5 flex flex-wrap justify-between items-center gap-3">
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                <ServerIcon className="w-4 h-4 text-violet-500" />
+                                {item.node_id}
+                              </div>
+                              <div className="px-2.5 py-1 rounded-full bg-slate-200/60 dark:bg-white/5 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                Priority {item.priority}
+                              </div>
                             </div>
-                            <div className="px-2.5 py-1 rounded-full bg-slate-200/60 dark:bg-white/5 text-[10px] font-black uppercase tracking-widest text-slate-500">
-                              Priority {item.priority}
+                            
+                            <div className="flex items-center space-x-2">
+                              {item.status !== "Completed" && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleDone(item)}
+                                  className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all border border-emerald-500/20"
+                                >
+                                  Mark Done
+                                </button>
+                              )}
+                               <button
+                                  type="button"
+                                  onClick={() => handleEdit(item)}
+                                  className="p-1.5 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-400 hover:text-violet-500 transition-all border border-transparent hover:border-violet-500/20"
+                                  title="Edit"
+                                >
+                                  <PencilSquareIcon className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(item.id)}
+                                  className="p-1.5 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-400 hover:text-rose-500 transition-all border border-transparent hover:border-rose-500/20"
+                                  title="Delete"
+                                >
+                                  <TrashIcon className="w-4 h-4" />
+                                </button>
                             </div>
                           </div>
                         </div>
@@ -494,14 +534,42 @@ export default function Schedules() {
                         {unscheduledItems.slice(0, 4).map((item) => (
                           <div
                             key={item.id}
-                            className="rounded-2xl bg-slate-50 dark:bg-white/5 px-4 py-3"
+                            className="rounded-2xl bg-slate-50 dark:bg-white/5 px-4 py-3 flex justify-between items-center group"
                           >
-                            <p className="text-sm font-bold text-slate-900 dark:text-white">
-                              {item.task_name}
-                            </p>
-                            <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-1">
-                              {item.parsedRawTime || "Time not set"}
-                            </p>
+                            <div>
+                              <p className="text-sm font-bold text-slate-900 dark:text-white">
+                                {item.task_name}
+                              </p>
+                              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-1">
+                                {item.parsedRawTime || "Time not set"}
+                              </p>
+                            </div>
+                            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleDone(item)}
+                                className="text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all border border-emerald-500/20"
+                                title="Mark Done"
+                              >
+                                Done
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleEdit(item)}
+                                className="p-1 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-400 hover:text-violet-500 transition-all border border-transparent hover:border-violet-500/20"
+                                title="Edit"
+                              >
+                                <PencilSquareIcon className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(item.id)}
+                                className="p-1 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-400 hover:text-rose-500 transition-all border border-transparent hover:border-rose-500/20"
+                                title="Delete"
+                              >
+                                <TrashIcon className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>

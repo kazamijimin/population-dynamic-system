@@ -25,6 +25,7 @@ export default function Simulation() {
   const [simulationStep, setSimulationStep] = useState(0);
   const [simSummary, setSimSummary] = useState(null);
   const [hourlyStats, setHourlyStats] = useState([]);
+  const [scenario, setScenario] = useState("monitoring");
 
   const runSimulation = async () => {
     setIsSimulating(true);
@@ -43,7 +44,15 @@ export default function Simulation() {
       { h: "9PM", type: "low", base: 20 },
     ];
 
-    const activeMultipliers = multipliers.filter(m => m.is_active);
+    const scenarioKeys = {
+      monitoring: ["base", "weekend", "weather"],
+      vacation: ["vacation", "holiday"],
+      promo: ["promo", "event", "sales"],
+    };
+    const selectedKeys = scenarioKeys[scenario] || scenarioKeys.monitoring;
+    const activeMultipliers = multipliers.filter(m =>
+      m.is_active && selectedKeys.some(key => m.key.toLowerCase().includes(key))
+    );
     const globalMultiplier = activeMultipliers.length > 0 
       ? activeMultipliers.reduce((acc, m) => acc + m.value, 0) / activeMultipliers.length 
       : 1.0;
@@ -71,6 +80,7 @@ export default function Simulation() {
         avg: avgLoad,
         risk: riskLevel,
         impact: Math.round((globalMultiplier - 1) * 100),
+        scenario,
         timestamp: new Date().toLocaleTimeString()
       });
     }, 500);
@@ -83,7 +93,9 @@ export default function Simulation() {
     p.key.includes('weekend') || 
     p.key.includes('holiday') || 
     p.key.includes('promo') ||
-    p.key.includes('event')
+    p.key.includes('event') ||
+    p.key.includes('vacation') ||
+    p.key.includes('sales')
   ).sort((a, b) => a.id - b.id);
 
   const registryParameters = parameters.filter(p => !multipliers.find(m => m.id === p.id)).sort((a, b) => a.id - b.id);
@@ -136,10 +148,10 @@ export default function Simulation() {
   };
 
   return (
-    <div className="min-h-screen italic bg-slate-50 dark:bg-slate-900">
-      <div className="flex w-full h-screen">
+    <div className="h-screen overflow-hidden italic bg-slate-50 dark:bg-slate-900">
+      <div className="flex w-full h-full">
         <Sidebar title="Sim Core" />
-        <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        <div className="flex-1 flex flex-col h-full overflow-hidden">
           <Topbar />
           <main className="flex-1 overflow-y-auto p-8">
             <div className="flex justify-between items-center mb-8">
@@ -175,6 +187,24 @@ export default function Simulation() {
                   Pressure Test
                   {simSummary && !isSimulating && <span className="text-[8px] opacity-60">{simSummary.timestamp}</span>}
                 </h3>
+                <div className="relative z-10 grid grid-cols-3 gap-2 mb-4">
+                  {[
+                    ["monitoring", "Monitor"],
+                    ["vacation", "Vacation"],
+                    ["promo", "Promo"],
+                  ].map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setScenario(value)}
+                      className={`py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                        scenario === value ? "bg-white text-violet-600" : "bg-white/10 text-white hover:bg-white/20"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
                 <button 
                   onClick={runSimulation} 
                   disabled={isSimulating}
@@ -235,6 +265,9 @@ export default function Simulation() {
                       </div>
                       <span className="text-[9px] font-black uppercase tracking-tighter opacity-60">Impact: {simSummary.impact > 0 ? `+${simSummary.impact}%` : `${simSummary.impact}%`}</span>
                     </div>
+                    <p className="mt-3 text-[8px] font-black uppercase tracking-widest text-violet-300/60">
+                      Scenario: {simSummary.scenario}
+                    </p>
                   </div>
                 )}
               </div>
@@ -275,7 +308,13 @@ export default function Simulation() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
-                        {registryParameters.map(p => (
+                        {registryParameters.length === 0 ? (
+                          <tr>
+                            <td colSpan="3" className="py-16 text-center text-slate-400 font-black uppercase tracking-widest text-xs">
+                              Base configuration only. Add custom registry parameters as needed.
+                            </td>
+                          </tr>
+                        ) : registryParameters.map(p => (
                           <tr key={p.id} className="group">
                             <td className="py-6 pr-4">
                               <div className="font-black uppercase italic text-sm tracking-tight">{p.name}</div>
@@ -307,7 +346,11 @@ export default function Simulation() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {multipliers.map(m => (
+                    {multipliers.length === 0 ? (
+                      <div className="col-span-full p-10 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700 text-center text-slate-400 font-black uppercase tracking-widest text-xs">
+                        No multiplier rules found. Defaults will appear after the registry syncs.
+                      </div>
+                    ) : multipliers.map(m => (
                       <div key={m.id} className="p-8 bg-slate-50 dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-700 group hover:border-violet-600 transition-all">
                         <div className="flex justify-between items-start mb-6">
                           <div className="flex items-center gap-3">

@@ -54,7 +54,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchLatestActivity = async () => {
       try {
-        const res = await api.get('/auth/activity-logs/');
+        const res = await api.get('/auth/admin/activity-logs/');
         const logData = Array.isArray(res.data) ? res.data : (res.data?.results || []);
         
         const formattedLogs = logData.slice(0, 5).map(log => {
@@ -241,9 +241,9 @@ export default function Dashboard() {
                     <Brain size={120} className="absolute -right-12 -bottom-12 opacity-5 rotate-12" />
                     <h3 className="text-xl font-black uppercase italic tracking-tighter mb-4 relative z-10">Demand Matrix</h3>
                     <p className="text-white/60 text-xs mb-8 font-medium leading-relaxed relative z-10">Neural prediction model suggests a 14.5% drift in inventory depletion for Node-09.</p>
-                    <button className="w-full py-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest border border-white/10 transition-all relative z-10">
+                    <Link to="/admin/simulation" className="block text-center w-full py-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest border border-white/10 transition-all relative z-10">
                       Recalibrate Nodes
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </div>

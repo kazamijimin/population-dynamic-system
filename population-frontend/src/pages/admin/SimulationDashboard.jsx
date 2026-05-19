@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import commonApi from "../../api/common.api";
 import { 
   UsersIcon, 
@@ -193,7 +194,7 @@ export default function SimulationDashboard() {
             <div className="px-8 py-6 border-b border-gray-50 flex justify-between items-center">
               <h2 className="text-xl font-bold text-gray-900">Flow Analytics & AI Projections</h2>
               <div className="flex gap-2">
-                <button className="text-[10px] bg-emerald-50 px-3 py-1 rounded-full font-bold text-emerald-600 uppercase transition-all hover:bg-emerald-100">Upload History</button>
+                <Link to="/admin/inventory" className="text-[10px] bg-emerald-50 px-3 py-1 rounded-full font-bold text-emerald-600 uppercase transition-all hover:bg-emerald-100">Upload History</Link>
                 <span className="text-[10px] bg-indigo-50 px-3 py-1 rounded-full font-bold text-indigo-600 uppercase">Engine Logs</span>
               </div>
             </div>

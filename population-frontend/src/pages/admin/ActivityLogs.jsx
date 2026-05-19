@@ -68,10 +68,10 @@ export default function ActivityLogs() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 italic">
-      <div className="flex w-full h-screen relative">
+    <div className="h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 italic">
+      <div className="flex w-full h-full relative">
         <Sidebar />
-        <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        <div className="flex-1 flex flex-col h-full overflow-hidden">
           <Topbar />
           <main className="flex-1 overflow-y-auto p-4 md:p-8 w-full">
             <div className="max-w-7xl mx-auto space-y-8">

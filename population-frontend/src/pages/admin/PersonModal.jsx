@@ -34,28 +34,33 @@ export default function PersonModal({ isOpen, onClose, person, households, zones
             gender: "Male",
             civil_status: "Single",
             employment_status: "Unemployed",
-            household: "",
-            zone: "",
+            household: households[0]?.id || "",
+            zone: households[0]?.zone || "",
             status: "Active",
             is_manually_updated: false
           });
         }
       }, 0);
     }
-  }, [person, isOpen]);
+  }, [person, isOpen, households]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const { zone, ...payload } = formData;
       if (person?.id) {
-        await commonApi.updatePerson(person.id, formData);
+        await commonApi.updatePerson(person.id, payload);
       } else {
-        await commonApi.createPerson(formData);
+        await commonApi.createPerson(payload);
       }
-      onSave();
+      onSave(person?.id ? "Guest record updated successfully!" : "Guest record created successfully!");
       onClose();
     } catch (err) {
-      alert("Error saving resident: " + (err.response?.data?.detail || "Unknown error"));
+      const data = err.response?.data;
+      const message = data?.detail || Object.entries(data || {})
+        .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(", ") : messages}`)
+        .join("\n") || "Unknown error";
+      alert("Error saving customer: " + message);
     }
   };
 
@@ -71,8 +76,8 @@ export default function PersonModal({ isOpen, onClose, person, households, zones
               {person ? "Manage Guest" : "Register Guest"}
             </h2>
           </div>
-          <button onClick={onClose} className="ds-btn ds-btn-ghost ds-btn-icon rounded-2xl" aria-label="Close">
-            ×
+          <button type="button" onClick={onClose} className="ds-btn ds-btn-ghost ds-btn-icon rounded-2xl" aria-label="Close">
+            x
           </button>
         </div>
 
@@ -99,14 +104,28 @@ export default function PersonModal({ isOpen, onClose, person, households, zones
           </div>
           <div className="ds-field">
             <label className="ds-label">Dining Table / Area</label>
-            <select required value={formData.household} onChange={(e) => setFormData({ ...formData, household: e.target.value })} className="ds-select">
-              <option value="">Select Table/Area</option>
+            <select
+              required
+              value={formData.household}
+              onChange={(e) => {
+                const selectedHousehold = households.find((h) => String(h.id) === e.target.value);
+                setFormData({ ...formData, household: e.target.value, zone: selectedHousehold?.zone || "" });
+              }}
+              className="ds-select"
+              disabled={households.length === 0}
+            >
+              <option value="">{households.length === 0 ? "No tables available" : "Select Table/Area"}</option>
               {households.map((h) => <option key={h.id} value={h.id}>Table {h.location_id}</option>)}
             </select>
+            {households.length === 0 && (
+              <p className="mt-2 text-xs font-semibold text-amber-600">
+                Create a dining area first, then reopen this form.
+              </p>
+            )}
           </div>
           <div className="ds-field">
             <label className="ds-label">Shop Zone</label>
-            <select value={formData.zone} onChange={(e) => setFormData({ ...formData, zone: e.target.value })} className="ds-select">
+            <select value={formData.zone} onChange={(e) => setFormData({ ...formData, zone: e.target.value })} className="ds-select" disabled>
               <option value="">(Inherited from Table)</option>
               {zones.map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}
             </select>
@@ -120,7 +139,7 @@ export default function PersonModal({ isOpen, onClose, person, households, zones
 
           <div className="md:col-span-2 ds-modal-footer -mx-6 -mb-5 mt-6">
             <button type="button" onClick={onClose} className="ds-btn ds-btn-secondary">Cancel</button>
-            <button type="submit" className="ds-btn ds-btn-primary">
+            <button type="submit" className="ds-btn ds-btn-primary" disabled={households.length === 0}>
               {person ? "Update Record" : "Confirm Entry"}
             </button>
           </div>

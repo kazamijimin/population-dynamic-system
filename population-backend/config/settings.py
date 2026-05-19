@@ -13,8 +13,10 @@ from corsheaders.defaults import default_headers
 from pathlib import Path
 import os
 import dj_database_url
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / '.env')
 
 def env_bool(name, default=False):
     value = os.environ.get(name, str(default))
@@ -110,6 +112,7 @@ class UnsafeSessionAuthentication(SessionAuthentication):
 DATABASE_URL = os.environ.get('DATABASE_URL')
 if DATABASE_URL:
     DATABASES = {'default': dj_database_url.parse(DATABASE_URL)}
+    DATABASES['default'].setdefault('OPTIONS', {})['connect_timeout'] = int(os.environ.get('DB_CONNECT_TIMEOUT', '5'))
 else:
     DATABASES = {
         'default': {

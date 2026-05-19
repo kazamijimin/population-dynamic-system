@@ -1,7 +1,8 @@
 from django.urls import path, include
-from .views import health
+from .views import csrf, health
 
 urlpatterns = [
+    path('csrf/', csrf),
     path('health/', health),
     path('auth/', include('core.users.urls')),
     path('inventory/', include('core.inventory.urls')),

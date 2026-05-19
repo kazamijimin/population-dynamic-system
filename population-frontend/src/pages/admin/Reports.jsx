@@ -4,7 +4,7 @@ import { analyticsApi } from "../../api/analytics.api";
 import Topbar from "../../components/layout/Topbar";
 import Sidebar from "../../components/layout/Sidebar";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import { 
   BarChart3, TrendingUp, Users, Zap, Download, FileDown, 
   Calendar, Clock, Target, ArrowUpRight, ArrowDownRight, 
@@ -16,6 +16,7 @@ export default function Reports() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
   const [activeRange, setActiveRange] = useState("daily");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newReport, setNewReport] = useState({ title: "", type: "inventory", description: "" });
@@ -31,7 +32,7 @@ export default function Reports() {
       const res = await analyticsApi.getReports();
       setReports(Array.isArray(res.data) ? res.data : (res.data?.results || []));
     } catch (err) {
-      setError("Failed to initialize report protocol.");
+      setError(err.response?.data?.detail || "Failed to initialize report protocol.");
     } finally {
       setLoading(false);
     }
@@ -49,8 +50,10 @@ export default function Reports() {
       setReports([res.data, ...reports]);
       setShowCreateModal(false);
       setNewReport({ title: "", type: "inventory", description: "" });
-    } catch {
-      setError("Security violation: Report generation locked.");
+      showSuccess("Report generated successfully!");
+    } catch (err) {
+      const data = err.response?.data;
+      setError(data?.detail || data?.title?.[0] || "Security violation: Report generation locked.");
     } finally {
       setLoading(false);
     }
@@ -58,23 +61,133 @@ export default function Reports() {
 
   const exportPDF = (report) => {
     setIsExporting(true);
-    const doc = new jsPDF();
-    doc.setFont("helvetica", "bold");
-    doc.text(`NEXUS_REPORT: ${report.title}`, 14, 20);
-    doc.setFontSize(10);
-    doc.text(`TYPE: ${report.type.toUpperCase()} // AT: ${new Date(report.created_at).toLocaleString()}`, 14, 30);
-    doc.autoTable({
-      startY: 40,
-      head: [['Metric', 'Value', 'Status']],
-      body: [
-        ['Customer Flow', '1.2k units', 'OPTIMAL'],
-        ['Inventory Drift', '2.1%', 'WARNING'],
-        ['Staffing Load', '92.4%', 'CRITICAL']
-      ],
-      theme: 'grid'
-    });
-    doc.save(`nexus_${report.type}_${report.id}.pdf`);
-    setIsExporting(false);
+    try {
+      const doc = new jsPDF();
+      
+      const primaryColor = [124, 58, 237]; // Violet 600
+      const secondaryColor = [30, 41, 59]; // Slate 800
+      
+      // Header Background
+      doc.setFillColor(...primaryColor);
+      doc.rect(0, 0, 210, 40, 'F');
+      
+      // Header Text
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.text("NEXUS DYNAMICS", 14, 20);
+      
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text("INTELLIGENCE HUB // MASTER REPORT", 14, 28);
+      
+      // Report Title
+      doc.setTextColor(...secondaryColor);
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text(report.title.toUpperCase(), 14, 55);
+      
+      // Metadata
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 116, 139);
+      doc.text(`CLASSIFICATION: ${report.type.toUpperCase()}`, 14, 65);
+      doc.text(`GENERATED: ${new Date(report.created_at).toLocaleString()}`, 14, 71);
+      doc.text(`REFERENCE ID: NEX-${report.id.toString().padStart(6, '0')}`, 14, 77);
+
+      const bodyData = [];
+      if (report.data && report.data.metrics) {
+        Object.entries(report.data.metrics).forEach(([key, value]) => {
+          bodyData.push([key.replace(/_/g, ' ').toUpperCase(), value]);
+        });
+      } else {
+        bodyData.push(['NO METRICS FOUND', '-']);
+      }
+
+      let startY = 87;
+
+      if (report.description) {
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...secondaryColor);
+        doc.text("DESCRIPTION:", 14, startY);
+        doc.setFont("helvetica", "italic");
+        doc.setTextColor(100, 116, 139);
+        const splitDesc = doc.splitTextToSize(report.description, 180);
+        doc.text(splitDesc, 14, startY + 6);
+        startY += (splitDesc.length * 6) + 12;
+      }
+
+      autoTable(doc, {
+        startY: startY,
+        head: [['METRIC', 'VALUE']],
+        body: bodyData,
+        theme: 'striped',
+        headStyles: {
+          fillColor: primaryColor,
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          halign: 'left'
+        },
+        columnStyles: {
+          0: { fontStyle: 'bold', textColor: secondaryColor },
+          1: { halign: 'right', textColor: primaryColor, fontStyle: 'bold' }
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252] // Slate 50
+        },
+        margin: { top: 20, right: 14, bottom: 20, left: 14 }
+      });
+
+      const pageCount = doc.internal.getNumberOfPages();
+      for(let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(148, 163, 184);
+        doc.text(
+          `NEXUS INTELLIGENCE SYSTEM • PAGE ${i} OF ${pageCount}`, 
+          doc.internal.pageSize.width / 2, 
+          doc.internal.pageSize.height - 10, 
+          { align: 'center' }
+        );
+      }
+
+      doc.save(`nexus_report_${report.type}_${report.id}.pdf`);
+      showSuccess(`Report "${report.title}" exported to PDF successfully!`);
+    } catch (err) {
+      setError("Failed to export PDF: " + err.message);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const exportCSV = (report) => {
+    try {
+      let csvContent = `Report Title,${report.title}\nReport Type,${report.type}\nGenerated,${new Date(report.created_at).toLocaleString()}\n\nMetric,Value\n`;
+
+      if (report.data && report.data.metrics) {
+        Object.entries(report.data.metrics).forEach(([key, value]) => {
+          csvContent += `${key.replace(/_/g, ' ').toUpperCase()},${value}\n`;
+        });
+      }
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `report_${report.type}_${report.id}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showSuccess(`Report "${report.title}" exported to CSV successfully!`);
+    } catch (err) {
+      setError("Failed to export CSV: " + err.message);
+    }
+  };
+
+  const showSuccess = (msg) => {
+    setSuccess(msg);
+    setTimeout(() => setSuccess(null), 3000);
   };
 
   const filteredReports = reports.filter(r => 
@@ -106,6 +219,24 @@ export default function Reports() {
                 </div>
               </div>
 
+              {success && (
+                <div className="flex items-start justify-between gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-semibold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200 shadow-sm not-italic mt-4">
+                  <span>{success}</span>
+                  <button type="button" onClick={() => setSuccess(null)} className="font-black hover:text-emerald-900 dark:hover:text-white">
+                    x
+                  </button>
+                </div>
+              )}
+
+              {error && (
+                <div className="flex items-start justify-between gap-4 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm font-semibold text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200 shadow-sm not-italic mt-4">
+                  <span>{error}</span>
+                  <button type="button" onClick={() => setError(null)} className="font-black hover:text-rose-900 dark:hover:text-white">
+                    x
+                  </button>
+                </div>
+              )}
+
               {/* Reports Grid */}
               <div className="bg-white dark:bg-slate-900/40 backdrop-blur-xl border border-slate-200 dark:border-white/5 rounded-4xl overflow-hidden shadow-2xl">
                 <div className="p-8 border-b border-slate-100 dark:border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
@@ -136,6 +267,14 @@ export default function Reports() {
                       <tbody className="divide-y divide-slate-100 dark:divide-white/5 font-bold">
                         {loading ? (
                           <tr><td colSpan="5" className="px-8 py-20 text-center"><Loader2 className="animate-spin text-violet-500 mx-auto" size={32} /></td></tr>
+                        ) : filteredReports.length === 0 ? (
+                          <tr>
+                            <td colSpan="5" className="px-8 py-24 text-center">
+                              <p className="text-sm font-black text-slate-400 uppercase tracking-widest">
+                                No reports yet. Generate a master report to start the archive.
+                              </p>
+                            </td>
+                          </tr>
                         ) : filteredReports.map(report => (
                           <tr key={report.id} className="hover:bg-slate-50/30 dark:hover:bg-white/5 transition-colors group italic">
                             <td className="px-8 py-6">
@@ -155,9 +294,14 @@ export default function Reports() {
                             </td>
                             <td className="px-8 py-6 text-[10px] text-slate-400 font-mono italic">{new Date(report.created_at).toLocaleString()}</td>
                             <td className="px-8 py-6 text-right">
-                              <button onClick={() => exportPDF(report)} className="p-3 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-400 hover:text-violet-500 hover:bg-violet-500/10 transition-all">
-                                <Download size={16} />
-                              </button>
+                              <div className="flex items-center justify-end gap-2">
+                                <button onClick={() => exportPDF(report)} title="Export PDF" className="p-3 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-400 hover:text-violet-500 hover:bg-violet-500/10 transition-all">
+                                  <FileText size={16} />
+                                </button>
+                                <button onClick={() => exportCSV(report)} title="Export CSV" className="p-3 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-400 hover:text-emerald-500 hover:bg-emerald-500/10 transition-all">
+                                  <FileDown size={16} />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}
